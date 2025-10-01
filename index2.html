@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Letters: E Roon Kang</title>
+    <style>
+    </style>
+  </head>
+  <body>
+    <h1>Letters: E Roon Kang</h1>
+    <p>We write from left to right but why?</p>
+    <div id="output"></div>
+
+    <script>
+      const outputEl = document.getElementById("output");
+
+      // Utility: create an element and append it to #output
+      function addDomElement(tag, attrs) {
+        const el = document.createElement(tag);
+        if (attrs) {
+          for (const k in attrs) {
+            if (k === "text") {
+              el.textContent = attrs[k];
+            } else {
+              el.setAttribute(k, attrs[k]);
+            }
+          }
+        }
+        outputEl.appendChild(el);
+        return el;
+      }
+
+      // Play a sound
+      function playSound(url) {
+        const audio = new Audio(url);
+        audio.play();
+      }
+
+      // Listen for keydown events
+      document.addEventListener("keydown", function(event) {
+        const key = event.key;
+        console.log("Key pressed:", key);
+
+        if (key === "Backspace") {
+          outputEl.textContent = outputEl.textContent.slice(0, -1);
+        } 
+        else if (key === "d" || key === "D") {
+          outputEl.textContent += "BARK!";
+        } 
+        else if (key === "c" || key === "C") {
+          addDomElement("img", { 
+            src: "https://media2.giphy.com/media/3vcHdyb75qRIA/200w.gif",
+            width: "200",
+            alt: "Dancing Cat"
+          });
+        } 
+        else if (key === "v" || key === "V") {
+          addDomElement("video", {
+            src: "https://i.imgur.com/Pj87n9Q.mp4",
+            width: "300",
+            height: "300",
+            autoplay: "true",
+            muted: "",
+            controls: ""
+          });
+        } 
+        else if (key === "s" || key === "S") {
+          playSound("https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg");
+          addDomElement("span", { text: " (sound played)" });
+        } 
+        else {
+          outputEl.textContent += key;
+        }
+      });
+    </script>
+  </body>
+</html>
