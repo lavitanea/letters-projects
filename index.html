@@ -40,7 +40,7 @@ function createSpiral(size, color) {
         
         body {
             overflow: hidden;
-            background: #f8f8f8;
+            background: #000000;
             font-family: 'Arial', sans-serif;
         }
         
@@ -55,8 +55,7 @@ function createSpiral(size, color) {
         .shape {
             position: absolute;
             pointer-events: none;
-            mix-blend-mode: multiply;
-            filter: brightness(1.2);
+            mix-blend-mode: lighten;
         }
         
         .line {
@@ -71,8 +70,6 @@ function createSpiral(size, color) {
             animation: lineGrow 0.8s ease-out;
             z-index: 100;
             mix-blend-mode: normal;
-            border: 3px solid #000000;
-            background: transparent !important;
         }
         
         .wave-shape {
@@ -171,7 +168,7 @@ function createSpiral(size, color) {
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(0, 0, 0, 0.3);
+            color: rgba(255, 255, 255, 0.4);
             font-size: 13px;
             text-align: center;
             pointer-events: none;
@@ -185,9 +182,9 @@ function createSpiral(size, color) {
             top: 30px;
             right: 30px;
             padding: 12px 24px;
-            background: rgba(0, 0, 0, 0.05);
-            color: rgba(0, 0, 0, 0.6);
-            border: 2px solid rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 30px;
             cursor: pointer;
             font-size: 12px;
@@ -199,9 +196,9 @@ function createSpiral(size, color) {
         }
         
         .clear-btn:hover {
-            background: rgba(0, 0, 0, 0.1);
-            border-color: rgba(0, 0, 0, 0.4);
-            color: rgba(0, 0, 0, 0.8);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: white;
         }
     </style>
 </head>
@@ -213,6 +210,7 @@ function createSpiral(size, color) {
     <script>
         const canvas = document.getElementById('canvas');
         const shapes = [];
+        const lines = [];
         let position = 0;
         
         const colors = {
@@ -222,6 +220,55 @@ function createSpiral(size, color) {
             blob: ['#F4D03F', '#F8C471', '#FAD7A0'],
             sharp: ['#FF6B9D', '#FFA07A', '#FFB6C1']
         };
+        
+        function createMondrianLine(isVertical) {
+            const line = document.createElement('div');
+            line.className = 'shape line';
+            line.style.background = '#000000';
+            line.style.border = 'none';
+            
+            if (isVertical) {
+                line.style.width = '8px';
+                line.style.height = '100vh';
+                line.style.left = (Math.random() * 80 + 10) + '%';
+                line.style.top = '0';
+                line.style.transform = 'none';
+            } else {
+                line.style.width = '100vw';
+                line.style.height = '8px';
+                line.style.top = (Math.random() * 80 + 10) + '%';
+                line.style.left = '0';
+                line.style.transform = 'none';
+            }
+            
+            line.style.transition = 'none';
+            canvas.appendChild(line);
+            lines.push(line);
+            return line;
+        }
+        
+        function getGridCell() {
+            // Find spaces between Mondrian lines to place shapes
+            if (lines.length === 0) {
+                return {
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    width: window.innerWidth * 0.3,
+                    height: window.innerHeight * 0.3
+                };
+            }
+            
+            // Get random position that fits within the grid
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            return {
+                x: Math.random() * w * 0.8 + w * 0.1,
+                y: Math.random() * h * 0.8 + h * 0.1,
+                width: 200 + Math.random() * 300,
+                height: 200 + Math.random() * 300
+            };
+        }
         
         function getCornerPosition(index) {
             const w = window.innerWidth;
@@ -312,22 +359,29 @@ function createSpiral(size, color) {
         }
         
         function createShape(letter) {
+            const lowerLetter = letter.toLowerCase();
+            
+            // I and L create Mondrian-style lines
+            if ('il'.includes(lowerLetter)) {
+                const isVertical = Math.random() > 0.5;
+                createMondrianLine(isVertical);
+                position++;
+                return;
+            }
+            
             const shape = document.createElement('div');
             shape.className = 'shape';
             
-            const startPos = getCornerPosition(position);
-            const targetPos = getFillPosition(position);
+            const cell = getGridCell();
             
-            shape.style.left = startPos.x + 'px';
-            shape.style.top = startPos.y + 'px';
+            shape.style.left = cell.x + 'px';
+            shape.style.top = cell.y + 'px';
+            shape.style.opacity = '0';
             
             setTimeout(() => {
-                shape.style.transition = 'all 2s cubic-bezier(0.4, 0, 0.2, 1)';
-                shape.style.left = targetPos.x + 'px';
-                shape.style.top = targetPos.y + 'px';
-            }, 50);
-            
-            const lowerLetter = letter.toLowerCase();
+                shape.style.transition = 'all 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                shape.style.opacity = '1';
+            }, 100);
             
             if (lowerLetter === 'o') {
                 const size = 400;
@@ -339,7 +393,7 @@ function createSpiral(size, color) {
                 shape.style.transform = 'translate(-50%, -50%)';
             }
             else if ('qcdgbp'.includes(lowerLetter)) {
-                const size = 300 + Math.random() * 150;
+                const size = Math.min(cell.width, cell.height) * 0.8;
                 const color = colors.round[Math.floor(Math.random() * colors.round.length)];
                 shape.style.width = size + 'px';
                 shape.style.height = size + 'px';
@@ -348,28 +402,18 @@ function createSpiral(size, color) {
                 shape.style.transform = 'translate(-50%, -50%)';
                 shape.classList.add('pulse-circle');
             }
-            else if ('il'.includes(lowerLetter)) {
-                const height = 500 + Math.random() * 300;
-                const width = 40 + Math.random() * 20;
-                shape.style.width = width + 'px';
-                shape.style.height = height + 'px';
-                shape.style.borderRadius = '20px';
-                shape.style.transform = 'translate(-50%, -50%)';
-                shape.classList.add('line');
-            }
             else if (lowerLetter === 'w') {
-                const width = 800;
+                const width = Math.min(800, cell.width * 1.5);
                 const height = 250;
                 shape.style.width = width + 'px';
                 shape.style.height = height + 'px';
                 const color = colors.wave[Math.floor(Math.random() * colors.wave.length)];
                 shape.style.background = `radial-gradient(ellipse, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
-                shape.style.transition = 'none';
                 shape.style.transform = 'translate(-50%, -50%)';
                 shape.classList.add('wave-shape');
             }
             else if ('mnuvxy'.includes(lowerLetter)) {
-                const size = 280 + Math.random() * 180;
+                const size = Math.min(cell.width, cell.height) * 0.7;
                 const color = colors.wave[Math.floor(Math.random() * colors.wave.length)];
                 shape.style.width = size + 'px';
                 shape.style.height = size + 'px';
@@ -379,8 +423,8 @@ function createSpiral(size, color) {
                 shape.classList.add('blob');
             }
             else if ('tkjhfr'.includes(lowerLetter)) {
-                const width = 120 + Math.random() * 80;
-                const height = 380 + Math.random() * 150;
+                const width = cell.width * 0.4;
+                const height = cell.height * 0.9;
                 const color = colors.blob[Math.floor(Math.random() * colors.blob.length)];
                 shape.style.width = width + 'px';
                 shape.style.height = height + 'px';
@@ -389,7 +433,7 @@ function createSpiral(size, color) {
                 shape.style.transform = 'translate(-50%, -50%)';
             }
             else if ('azvse'.includes(lowerLetter)) {
-                const size = 280 + Math.random() * 150;
+                const size = Math.min(cell.width, cell.height) * 0.7;
                 const color = colors.sharp[Math.floor(Math.random() * colors.sharp.length)];
                 shape.style.width = size + 'px';
                 shape.style.height = size + 'px';
@@ -398,7 +442,7 @@ function createSpiral(size, color) {
                 shape.style.transform = 'translate(-50%, -50%) rotate(' + Math.random() * 360 + 'deg)';
             }
             else {
-                const size = 300 + Math.random() * 140;
+                const size = Math.min(cell.width, cell.height) * 0.75;
                 const color = colors.blob[Math.floor(Math.random() * colors.blob.length)];
                 shape.style.width = size + 'px';
                 shape.style.height = size + 'px';
@@ -411,7 +455,7 @@ function createSpiral(size, color) {
             shapes.push(shape);
             position++;
             
-            if (shapes.length > 100) {
+            if (shapes.length > 80) {
                 const oldShape = shapes.shift();
                 oldShape.style.opacity = '0';
                 setTimeout(() => oldShape.remove(), 500);
@@ -429,7 +473,12 @@ function createSpiral(size, color) {
                 shape.style.opacity = '0';
                 setTimeout(() => shape.remove(), 300);
             });
+            lines.forEach(line => {
+                line.style.opacity = '0';
+                setTimeout(() => line.remove(), 300);
+            });
             shapes.length = 0;
+            lines.length = 0;
             position = 0;
         }
     </script>
