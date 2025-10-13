@@ -1,4 +1,31 @@
-<!DOCTYPE html>
+function createSpiral(size, color) {
+            const svg = `
+                <svg width="${size}" height="${size}" viewBox="0 0 300 300" style="position: absolute; top: 0; left: 0;">
+                    <defs>
+                        <radialGradient id="spiral${position}">
+                            <stop offset="0%" style="stop-color:${color};stop-opacity:1" />
+                            <stop offset="60%" style="stop-color:${color};stop-opacity:0.7" />
+                            <stop offset="100%" style="stop-color:${color};stop-opacity:0" />
+                        </radialGradient>
+                    </defs>
+                    <path d="M 150 150
+                             C 150 120, 170 110, 190 120
+                             C 220 135, 230 160, 220 190
+                             C 205 230, 160 245, 120 230
+                             C 70 210, 50 160, 65 110
+                             C 80 60, 140 40, 190 55
+                             C 250 75, 280 140, 265 200
+                             C 245 270, 170 300, 100 280"
+                          fill="none" 
+                          stroke="url(#spiral${position})" 
+                          stroke-width="25" 
+                          stroke-linecap="round"
+                          style="filter: blur(2px);"/>
+                    <path d="M 150 150
+                             C 150 120, 170 110, 190 120
+                             C 220 135, 230 160, 220 190
+                             C 205 230, 160 245, 120 230
+                             C 70 210, 50 160, 65 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -37,6 +64,8 @@
         
         .line {
             animation: lineGrow 0.8s ease-out;
+            z-index: 100;
+            mix-blend-mode: normal;
         }
         
         .wave-shape {
@@ -187,36 +216,65 @@
             sharp: ['#FF6B9D', '#FFA07A', '#FFB6C1']
         };
         
-        function getPositionAlongEdge(index) {
+        function getCornerPosition(index) {
             const w = window.innerWidth;
             const h = window.innerHeight;
-            const perimeter = 2 * (w + h);
-            const step = (perimeter / 100) * index;
-            const pos = step % perimeter;
-            
-            if (pos < w) {
-                return { x: pos, y: 0 };
-            } else if (pos < w + h) {
-                return { x: w, y: pos - w };
-            } else if (pos < 2 * w + h) {
-                return { x: w - (pos - w - h), y: h };
-            } else {
-                return { x: 0, y: h - (pos - 2 * w - h) };
-            }
+            const corners = [
+                { x: 0, y: 0 },           // Top-left
+                { x: w, y: 0 },           // Top-right
+                { x: w, y: h },           // Bottom-right
+                { x: 0, y: h }            // Bottom-left
+            ];
+            return corners[index % 4];
         }
         
-        function getInwardPosition(index) {
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            const maxDist = Math.min(centerX, centerY);
+        function getFillPosition(index) {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const centerX = w / 2;
+            const centerY = h / 2;
             
-            const angle = index * 0.618 * Math.PI * 2;
-            const dist = maxDist * (1 - (index % 40) / 40);
+            // Start from corners and progressively fill empty spaces
+            const level = Math.floor(index / 4);
+            const posInLevel = index % 4;
             
-            return {
-                x: centerX + dist * Math.cos(angle),
-                y: centerY + dist * Math.sin(angle)
-            };
+            // Calculate position based on subdividing the space
+            const segment = Math.floor(level / 4);
+            const subPos = level % 4;
+            
+            let baseX, baseY;
+            
+            // Corners first, then edges, then progressively fill inward
+            if (level === 0) {
+                // Four corners
+                const corners = [
+                    { x: 50, y: 50 },
+                    { x: w - 50, y: 50 },
+                    { x: w - 50, y: h - 50 },
+                    { x: 50, y: h - 50 }
+                ];
+                return corners[posInLevel];
+            } else if (level < 4) {
+                // Edge positions
+                const edgePositions = [
+                    { x: centerX, y: 50 },                    // Top
+                    { x: w - 50, y: centerY },                // Right
+                    { x: centerX, y: h - 50 },                // Bottom
+                    { x: 50, y: centerY }                     // Left
+                ];
+                return edgePositions[posInLevel];
+            } else {
+                // Fill remaining space with spiral-like pattern
+                const angle = index * 2.4;
+                const radius = (level - 4) * 80 + 150;
+                const maxRadius = Math.min(centerX, centerY) * 0.8;
+                const normalizedRadius = Math.min(radius, maxRadius);
+                
+                return {
+                    x: centerX + normalizedRadius * Math.cos(angle),
+                    y: centerY + normalizedRadius * Math.sin(angle)
+                };
+            }
         }
         
         function createSpiral(size, color) {
@@ -250,11 +308,11 @@
             const shape = document.createElement('div');
             shape.className = 'shape';
             
-            const edgePos = getPositionAlongEdge(position);
-            const targetPos = getInwardPosition(position);
+            const startPos = getCornerPosition(position);
+            const targetPos = getFillPosition(position);
             
-            shape.style.left = edgePos.x + 'px';
-            shape.style.top = edgePos.y + 'px';
+            shape.style.left = startPos.x + 'px';
+            shape.style.top = startPos.y + 'px';
             
             setTimeout(() => {
                 shape.style.transition = 'all 2s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -265,12 +323,13 @@
             const lowerLetter = letter.toLowerCase();
             
             if (lowerLetter === 'o') {
-                const size = 350;
+                const size = 400;
                 const color = colors.round[Math.floor(Math.random() * colors.round.length)];
                 shape.innerHTML = createSpiral(size, color);
                 shape.classList.add('pulse-circle');
                 shape.style.width = size + 'px';
                 shape.style.height = size + 'px';
+                shape.style.transform = 'translate(-50%, -50%)';
             }
             else if ('qcdgbp'.includes(lowerLetter)) {
                 const size = 300 + Math.random() * 150;
@@ -279,16 +338,19 @@
                 shape.style.height = size + 'px';
                 shape.style.background = `radial-gradient(circle, ${color} 0%, ${color}99 30%, ${color}00 100%)`;
                 shape.style.borderRadius = '50%';
+                shape.style.transform = 'translate(-50%, -50%)';
                 shape.classList.add('pulse-circle');
             }
             else if ('il'.includes(lowerLetter)) {
-                const height = 400 + Math.random() * 200;
-                const width = 30;
+                const height = 500 + Math.random() * 300;
+                const width = 40 + Math.random() * 20;
                 shape.style.width = width + 'px';
                 shape.style.height = height + 'px';
-                shape.style.background = 'linear-gradient(180deg, #000000 0%, #00000099 50%, #00000000 100%)';
-                shape.style.borderRadius = '15px';
+                shape.style.background = 'linear-gradient(180deg, #000000 0%, #000000dd 60%, #00000000 100%)';
+                shape.style.borderRadius = '20px';
+                shape.style.transform = 'translate(-50%, -50%)';
                 shape.classList.add('line');
+                shape.style.boxShadow = '0 0 30px rgba(0, 0, 0, 0.8)';
             }
             else if (lowerLetter === 'w') {
                 const width = 800;
@@ -298,6 +360,7 @@
                 const color = colors.wave[Math.floor(Math.random() * colors.wave.length)];
                 shape.style.background = `radial-gradient(ellipse, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
                 shape.style.transition = 'none';
+                shape.style.transform = 'translate(-50%, -50%)';
                 shape.classList.add('wave-shape');
             }
             else if ('mnuvxy'.includes(lowerLetter)) {
@@ -307,6 +370,7 @@
                 shape.style.height = size + 'px';
                 shape.style.background = `radial-gradient(circle, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
                 shape.style.borderRadius = '60% 40% 70% 30% / 50% 60% 40% 50%';
+                shape.style.transform = 'translate(-50%, -50%)';
                 shape.classList.add('blob');
             }
             else if ('tkjhfr'.includes(lowerLetter)) {
@@ -317,6 +381,7 @@
                 shape.style.height = height + 'px';
                 shape.style.background = `radial-gradient(ellipse, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
                 shape.style.borderRadius = '40% 60% 45% 55% / 30% 70% 30% 70%';
+                shape.style.transform = 'translate(-50%, -50%)';
             }
             else if ('azvse'.includes(lowerLetter)) {
                 const size = 280 + Math.random() * 150;
@@ -325,7 +390,7 @@
                 shape.style.height = size + 'px';
                 shape.style.background = `radial-gradient(circle, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
                 shape.style.borderRadius = '25% 75% 35% 65% / 70% 30% 70% 30%';
-                shape.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
+                shape.style.transform = 'translate(-50%, -50%) rotate(' + Math.random() * 360 + 'deg)';
             }
             else {
                 const size = 300 + Math.random() * 140;
@@ -334,6 +399,7 @@
                 shape.style.height = size + 'px';
                 shape.style.background = `radial-gradient(circle, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
                 shape.style.borderRadius = '50% 50% 45% 55% / 55% 45% 55% 45%';
+                shape.style.transform = 'translate(-50%, -50%)';
             }
             
             canvas.appendChild(shape);
