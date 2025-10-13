@@ -30,6 +30,19 @@
             pointer-events: none;
             animation: fadeIn 0.5s ease-out, float 8s ease-in-out infinite;
             opacity: 0.9;
+            overflow: visible;
+        }
+        
+        .pulse {
+            animation: fadeIn 0.5s ease-out, pulse 2s ease-in-out infinite;
+        }
+        
+        .line {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .wave-shape {
+            animation: fadeIn 0.5s ease-out, waveMove 8s ease-in-out infinite;
         }
         
         @keyframes fadeIn {
@@ -96,23 +109,23 @@
         const shapes = [];
         let shapeCounter = 0;
         
-        // Color schemes for different shape types
+        // Color schemes for different shape types - brighter colors
         const colorSchemes = {
-            round: 'radial-gradient(circle, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.6) 50%, rgba(118, 75, 162, 0.1) 100%)',
-            rectangular: 'radial-gradient(circle, rgba(240, 147, 251, 0.9) 0%, rgba(245, 87, 108, 0.6) 50%, rgba(245, 87, 108, 0.1) 100%)',
-            wavy: 'radial-gradient(ellipse, rgba(67, 233, 123, 0.9) 0%, rgba(56, 249, 215, 0.6) 50%, rgba(56, 249, 215, 0.1) 100%)',
-            sharp: 'radial-gradient(circle, rgba(255, 110, 127, 0.9) 0%, rgba(255, 182, 193, 0.6) 50%, rgba(255, 182, 193, 0.1) 100%)',
-            default: 'radial-gradient(circle, rgba(250, 112, 154, 0.9) 0%, rgba(254, 225, 64, 0.6) 50%, rgba(254, 225, 64, 0.1) 100%)'
+            round: 'radial-gradient(circle, rgba(147, 197, 253, 1) 0%, rgba(186, 148, 255, 0.7) 40%, rgba(186, 148, 255, 0) 100%)',
+            rectangular: 'radial-gradient(circle, rgba(253, 186, 255, 1) 0%, rgba(255, 125, 168, 0.7) 40%, rgba(255, 125, 168, 0) 100%)',
+            wavy: 'radial-gradient(ellipse, rgba(110, 255, 180, 1) 0%, rgba(100, 255, 255, 0.7) 40%, rgba(100, 255, 255, 0) 100%)',
+            sharp: 'radial-gradient(circle, rgba(255, 150, 180, 1) 0%, rgba(255, 220, 230, 0.7) 40%, rgba(255, 220, 230, 0) 100%)',
+            default: 'radial-gradient(circle, rgba(255, 180, 90, 1) 0%, rgba(255, 240, 120, 0.7) 40%, rgba(255, 240, 120, 0) 100%)'
         };
         
         function getSpiralPosition(index) {
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
             
-            // Calculate spiral from outside to inside
-            const maxRadius = Math.min(centerX, centerY) * 0.9;
-            const angle = index * 0.5; // Spiral angle
-            const radius = maxRadius - (index * 8); // Move inward with each shape
+            // Calculate spiral from outside to inside, allowing full screen coverage
+            const maxRadius = Math.max(centerX, centerY) * 1.2;
+            const angle = index * 0.4; // Spiral angle
+            const radius = maxRadius - (index * 12); // Move inward with each shape
             
             const x = centerX + radius * Math.cos(angle);
             const y = centerY + radius * Math.sin(angle);
@@ -120,13 +133,38 @@
             return { x, y };
         }
         
+        function createSpiralPath(size) {
+            const svg = `
+                <svg width="${size}" height="${size}" viewBox="0 0 200 200" style="position: absolute; top: 0; left: 0;">
+                    <defs>
+                        <linearGradient id="spiralGrad${shapeCounter}" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:rgb(147, 197, 253);stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:rgb(186, 148, 255);stop-opacity:0.7" />
+                            <stop offset="100%" style="stop-color:rgb(186, 148, 255);stop-opacity:0" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M 100 100 
+                             Q 100 60, 130 60
+                             Q 160 60, 160 90
+                             Q 160 130, 130 130
+                             Q 90 130, 90 100
+                             Q 90 70, 110 70
+                             Q 120 70, 120 80"
+                          fill="none" 
+                          stroke="url(#spiralGrad${shapeCounter})" 
+                          stroke-width="15" 
+                          stroke-linecap="round"/>
+                </svg>
+            `;
+            return svg;
+        }
+        
         function createShape(letter) {
             const shape = document.createElement('div');
             shape.className = 'shape';
             const pos = getSpiralPosition(shapeCounter);
-            shapeCounter++;
             
-            const size = 150 + Math.random() * 100;
+            const size = 250 + Math.random() * 150;
             
             shape.style.left = (pos.x - size / 2) + 'px';
             shape.style.top = (pos.y - size / 2) + 'px';
@@ -135,9 +173,89 @@
             
             const lowerLetter = letter.toLowerCase();
             
-            // Round letters - organic circles
-            if ('oqcdgbp'.includes(lowerLetter)) {
+            // O - Spiral shape
+            if (lowerLetter === 'o') {
+                shape.innerHTML = createSpiralPath(size);
+                shape.classList.add('pulse');
+                shapeCounter++;
+            }
+            // Round letters - pulsing circles
+            else if ('qcdgbp'.includes(lowerLetter)) {
                 shape.style.background = colorSchemes.round;
+                shape.style.borderRadius = '50%';
+                shape.classList.add('pulse');
+                if (Math.random() > 0.5) {
+                    shape.style.width = size * 1.4 + 'px';
+                }
+                shapeCounter++;
+            }
+            // Sharp letters I and L - thick black lines
+            else if ('il'.includes(lowerLetter)) {
+                const lineHeight = size * 1.8;
+                const lineWidth = 25;
+                shape.style.width = lineWidth + 'px';
+                shape.style.height = lineHeight + 'px';
+                shape.style.background = 'linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0) 100%)';
+                shape.style.borderRadius = '20px';
+                shape.classList.add('line');
+                shapeCounter++;
+            }
+            // T, K, J, H, F, R - thick lines
+            else if ('tkjhfr'.includes(lowerLetter)) {
+                shape.style.background = colorSchemes.rectangular;
+                const rectWidth = size * 0.6;
+                const rectHeight = size * 1.8;
+                shape.style.width = rectWidth + 'px';
+                shape.style.height = rectHeight + 'px';
+                shape.style.borderRadius = '35% 65% 40% 60% / 30% 70% 30% 70%';
+                shapeCounter++;
+            }
+            // W - big wave moving corner to corner
+            else if (lowerLetter === 'w') {
+                shape.style.background = colorSchemes.wavy;
+                shape.style.width = size * 3 + 'px';
+                shape.style.height = size * 1.2 + 'px';
+                shape.style.borderRadius = '50% 50% 50% 50% / 80% 80% 20% 20%';
+                shape.classList.remove('shape');
+                shape.classList.add('shape', 'wave-shape');
+                shape.style.animation = 'fadeIn 0.5s ease-out, waveMove 8s ease-in-out infinite, wave 4s ease-in-out infinite';
+                shapeCounter++;
+            }
+            // Wavy letters - organic blobs
+            else if ('mnuvxy'.includes(lowerLetter)) {
+                shape.style.background = colorSchemes.wavy;
+                shape.style.borderRadius = '63% 37% 54% 46% / 55% 48% 52% 45%';
+                shape.style.animation = 'fadeIn 0.5s ease-out, float 8s ease-in-out infinite, morph 6s ease-in-out infinite';
+                shapeCounter++;
+            }
+            // Sharp letters - organic angular
+            else if ('azvse'.includes(lowerLetter)) {
+                shape.style.background = colorSchemes.sharp;
+                shape.style.borderRadius = '20% 80% 30% 70% / 60% 30% 70% 40%';
+                shape.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
+                shapeCounter++;
+            }
+            // Default - organic rounded
+            else {
+                shape.style.background = colorSchemes.default;
+                shape.style.borderRadius = '54% 46% 48% 52% / 50% 55% 45% 50%';
+                shapeCounter++;
+            }
+            
+            // Add rotation variation
+            shape.style.animationDelay = Math.random() * 2 + 's';
+            shape.style.animationDuration = (6 + Math.random() * 4) + 's';
+            
+            canvas.appendChild(shape);
+            shapes.push(shape);
+            
+            // Limit shapes on screen - increased to fill screen
+            if (shapes.length > 80) {
+                const oldShape = shapes.shift();
+                oldShape.style.animation = 'fadeOut 0.5s ease-out';
+                setTimeout(() => oldShape.remove(), 500);
+            }
+        }Schemes.round;
                 shape.style.borderRadius = '47% 53% 48% 52% / 53% 47% 53% 47%';
                 if (Math.random() > 0.5) {
                     shape.style.width = size * 1.4 + 'px';
