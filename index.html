@@ -1,36 +1,9 @@
-function createSpiral(size, color) {
-            const svg = `
-                <svg width="${size}" height="${size}" viewBox="0 0 300 300" style="position: absolute; top: 0; left: 0;">
-                    <defs>
-                        <radialGradient id="spiral${position}">
-                            <stop offset="0%" style="stop-color:${color};stop-opacity:1" />
-                            <stop offset="60%" style="stop-color:${color};stop-opacity:0.7" />
-                            <stop offset="100%" style="stop-color:${color};stop-opacity:0" />
-                        </radialGradient>
-                    </defs>
-                    <path d="M 150 150
-                             C 150 120, 170 110, 190 120
-                             C 220 135, 230 160, 220 190
-                             C 205 230, 160 245, 120 230
-                             C 70 210, 50 160, 65 110
-                             C 80 60, 140 40, 190 55
-                             C 250 75, 280 140, 265 200
-                             C 245 270, 170 300, 100 280"
-                          fill="none" 
-                          stroke="url(#spiral${position})" 
-                          stroke-width="25" 
-                          stroke-linecap="round"
-                          style="filter: blur(2px);"/>
-                    <path d="M 150 150
-                             C 150 120, 170 110, 190 120
-                             C 220 135, 230 160, 220 190
-                             C 205 230, 160 245, 120 230
-                             C 70 210, 50 160, 65 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keyboard Abstract Art v2</title>
+    <title>Physical + Emotional Typing Art</title>
     <style>
         * {
             margin: 0;
@@ -40,7 +13,7 @@ function createSpiral(size, color) {
         
         body {
             overflow: hidden;
-            background: #000000;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
             font-family: 'Arial', sans-serif;
         }
         
@@ -55,112 +28,158 @@ function createSpiral(size, color) {
         .shape {
             position: absolute;
             pointer-events: none;
-            mix-blend-mode: lighten;
+            transition: all 0.3s ease-out;
         }
         
-        .line {
-            mix-blend-mode: normal;
+        /* Liquid vowels - flowing and pooling */
+        .liquid {
+            mix-blend-mode: screen;
+            animation: liquidFlow 4s ease-in-out infinite;
+            filter: blur(3px);
         }
         
-        .pulse-circle {
-            animation: pulseGrow 3s ease-in-out infinite;
-        }
-        
-        .line {
-            animation: lineGrow 0.8s ease-out;
-            z-index: 100;
-            mix-blend-mode: normal;
-        }
-        
-        .wave-shape {
-            animation: waveTravel 12s linear infinite, waveUndulate 3s ease-in-out infinite;
-        }
-        
-        .blob {
-            animation: blobMorph 8s ease-in-out infinite, blobFloat 10s ease-in-out infinite;
-        }
-        
-        @keyframes pulseGrow {
-            0%, 100% {
-                transform: scale(1) rotate(0deg);
-                opacity: 0.9;
-            }
-            50% {
-                transform: scale(1.25) rotate(180deg);
-                opacity: 1;
-            }
-        }
-        
-        @keyframes lineGrow {
-            from {
-                height: 0;
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        
-        @keyframes waveTravel {
-            0% {
-                left: -10%;
-                top: 0%;
-            }
-            25% {
-                left: 90%;
-                top: 10%;
-            }
-            50% {
-                left: 85%;
-                top: 80%;
-            }
-            75% {
-                left: 5%;
-                top: 90%;
-            }
-            100% {
-                left: -10%;
-                top: 0%;
-            }
-        }
-        
-        @keyframes waveUndulate {
-            0%, 100% {
-                border-radius: 45% 55% 50% 50% / 75% 75% 25% 25%;
-            }
-            33% {
-                border-radius: 55% 45% 60% 40% / 65% 80% 20% 35%;
-            }
-            66% {
-                border-radius: 40% 60% 45% 55% / 70% 65% 35% 30%;
-            }
-        }
-        
-        @keyframes blobMorph {
+        @keyframes liquidFlow {
             0%, 100% {
                 border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%;
             }
-            25% {
-                border-radius: 40% 60% 50% 50% / 70% 30% 70% 30%;
+            33% {
+                border-radius: 40% 60% 50% 50% / 60% 40% 60% 40%;
             }
-            50% {
-                border-radius: 55% 45% 35% 65% / 60% 55% 45% 40%;
-            }
-            75% {
-                border-radius: 45% 55% 65% 35% / 40% 65% 35% 60%;
+            66% {
+                border-radius: 55% 45% 35% 65% / 45% 55% 45% 55%;
             }
         }
         
-        @keyframes blobFloat {
+        /* Solid consonants - structured and resistant */
+        .solid {
+            mix-blend-mode: lighten;
+            animation: solidPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes solidPulse {
             0%, 100% {
-                transform: translate(0, 0) rotate(0deg);
+                transform: translate(var(--tx), var(--ty)) scale(1);
+            }
+            50% {
+                transform: translate(var(--tx), var(--ty)) scale(1.05);
+            }
+        }
+        
+        /* Triangle shapes - sharp and angular */
+        .triangle {
+            animation: triangleRotate 6s linear infinite;
+        }
+        
+        @keyframes triangleRotate {
+            0% {
+                transform: translate(var(--tx), var(--ty)) rotate(0deg);
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) rotate(360deg);
+            }
+        }
+        
+        /* Round/Spiral shapes */
+        .round {
+            mix-blend-mode: screen;
+            animation: roundPulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes roundPulse {
+            0%, 100% {
+                transform: translate(var(--tx), var(--ty)) scale(1) rotate(0deg);
+                opacity: 0.9;
+            }
+            50% {
+                transform: translate(var(--tx), var(--ty)) scale(1.15) rotate(180deg);
+                opacity: 1;
+            }
+        }
+        
+        /* Line shapes - borders between others */
+        .line-shape {
+            mix-blend-mode: normal;
+            animation: lineFloat 5s ease-in-out infinite;
+            z-index: 10;
+        }
+        
+        @keyframes lineFloat {
+            0%, 100% {
+                transform: translate(var(--tx), var(--ty)) translateY(0);
+            }
+            50% {
+                transform: translate(var(--tx), var(--ty)) translateY(-20px);
+            }
+        }
+        
+        /* Wave shapes - water-like */
+        .wave {
+            mix-blend-mode: screen;
+            animation: waveFlow 5s ease-in-out infinite;
+            filter: blur(2px);
+        }
+        
+        @keyframes waveFlow {
+            0%, 100% {
+                border-radius: 45% 55% 50% 50% / 75% 75% 25% 25%;
+                transform: translate(var(--tx), var(--ty)) rotate(0deg);
             }
             33% {
-                transform: translate(30px, -40px) rotate(120deg);
+                border-radius: 55% 45% 60% 40% / 65% 80% 20% 35%;
+                transform: translate(var(--tx), var(--ty)) rotate(10deg);
             }
             66% {
-                transform: translate(-20px, 20px) rotate(240deg);
+                border-radius: 40% 60% 45% 55% / 70% 65% 35% 30%;
+                transform: translate(var(--tx), var(--ty)) rotate(-10deg);
             }
+        }
+        
+        /* Air/Space effect */
+        .air {
+            mix-blend-mode: soft-light;
+            animation: airPush 3s ease-out;
+            filter: blur(15px);
+            opacity: 0.4;
+        }
+        
+        @keyframes airPush {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0.6;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(3);
+                opacity: 0;
+            }
+        }
+        
+        /* Gravity well for punctuation */
+        .gravity {
+            mix-blend-mode: overlay;
+            animation: gravityPull 8s ease-in-out infinite;
+            filter: blur(8px);
+            z-index: 5;
+        }
+        
+        @keyframes gravityPull {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.3) rotate(360deg);
+            }
+        }
+        
+        /* Calm mood - slow typing */
+        .calm {
+            animation-duration: 8s !important;
+            filter: blur(4px);
+        }
+        
+        /* Aggressive mood - fast typing */
+        .aggressive {
+            animation-duration: 1.5s !important;
+            filter: blur(0px) drop-shadow(0 0 10px currentColor);
         }
         
         .info {
@@ -168,13 +187,28 @@ function createSpiral(size, color) {
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
             text-align: center;
             pointer-events: none;
             z-index: 1000;
             letter-spacing: 2px;
             text-transform: uppercase;
+        }
+        
+        .mood-indicator {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            z-index: 1000;
+            letter-spacing: 1px;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .clear-btn {
@@ -199,287 +233,374 @@ function createSpiral(size, color) {
             background: rgba(255, 255, 255, 0.15);
             border-color: rgba(255, 255, 255, 0.4);
             color: white;
+            transform: scale(1.05);
+        }
+        
+        .fade-out {
+            animation: fadeOut 2s ease-out forwards;
+        }
+        
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translate(var(--tx), var(--ty)) scale(0.5);
+            }
         }
     </style>
 </head>
 <body>
     <div id="canvas"></div>
     <button class="clear-btn" onclick="clearCanvas()">Clear</button>
-    <div class="info">Type to create</div>
+    <div class="mood-indicator">
+        <div>Mood: <span id="mood-text">Neutral</span></div>
+        <div style="font-size: 11px; margin-top: 5px; opacity: 0.7;">Speed: <span id="speed-text">0</span> cps</div>
+    </div>
+    <div class="info">Type to create • Space for air • Punctuation for gravity</div>
     
     <script>
         const canvas = document.getElementById('canvas');
         const shapes = [];
-        const lines = [];
-        let position = 0;
+        const gravityWells = [];
         
+        // Typing analysis
+        let typingTimes = [];
+        let lastKeyTime = 0;
+        let currentMood = 'neutral';
+        let typingSpeed = 0;
+        
+        // Color palettes based on mood
         const colors = {
-            round: ['#5DADE2', '#A569BD', '#EC7063'],
-            line: ['#000000'],
-            wave: ['#1ABC9C', '#48C9B0', '#76D7C4'],
-            blob: ['#F4D03F', '#F8C471', '#FAD7A0'],
-            sharp: ['#FF6B9D', '#FFA07A', '#FFB6C1']
+            aggressive: {
+                // Neon bright colors for fast typing
+                triangle: ['#FF0080', '#00FFFF', '#FF00FF', '#FFFF00', '#00FF00'],
+                round: ['#FF1493', '#00CED1', '#FF69B4', '#00FFFF'],
+                line: ['#FFFFFF', '#FFFF00', '#00FFFF'],
+                wave: ['#00FF7F', '#FF00FF', '#00BFFF', '#FF1493'],
+                liquid: ['#FF0066', '#00FFAA', '#FF00DD', '#00FFFF']
+            },
+            calm: {
+                // Pastel light colors for slow typing
+                triangle: ['#FFB6C1', '#B0E0E6', '#DDA0DD', '#F0E68C', '#98FB98'],
+                round: ['#FFE4E1', '#E0FFFF', '#F5DEB3', '#FFF0F5'],
+                line: ['#F0F8FF', '#FFFACD', '#F0FFF0'],
+                wave: ['#B0E0E6', '#DDA0DD', '#FFE4B5', '#E6E6FA'],
+                liquid: ['#FFE4E1', '#B0E0E6', '#DDA0DD', '#E0FFFF']
+            },
+            neutral: {
+                // Medium brightness for neutral
+                triangle: ['#FF69B4', '#4169E1', '#9370DB', '#FFD700'],
+                round: ['#FF1493', '#00CED1', '#9370DB', '#FF69B4'],
+                line: ['#FFFFFF', '#FFD700', '#00CED1'],
+                wave: ['#20B2AA', '#9370DB', '#4169E1', '#FF69B4'],
+                liquid: ['#FF1493', '#20B2AA', '#9370DB', '#00CED1']
+            }
         };
         
-        function createMondrianLine(isVertical) {
-            const line = document.createElement('div');
-            line.className = 'shape line';
-            line.style.background = '#000000';
-            line.style.border = 'none';
+        // Letter categories
+        const letterTypes = {
+            triangle: 'radvRADV',
+            round: 'qbcogpQBCOGP',
+            line: 'tifkehxyTIFKEHXY',
+            wave: 'wjumnsζWJUMNSZ',
+            liquid: 'aeiouAEIOU' // Vowels as liquid
+        };
+        
+        function analyzeMood() {
+            const now = Date.now();
+            if (typingTimes.length > 1) {
+                const recentTimes = typingTimes.slice(-10);
+                const intervals = [];
+                for (let i = 1; i < recentTimes.length; i++) {
+                    intervals.push(recentTimes[i] - recentTimes[i-1]);
+                }
+                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                typingSpeed = Math.round(1000 / avgInterval * 10) / 10;
+                
+                // Fast typing (< 150ms between keys) = aggressive
+                // Slow typing (> 400ms between keys) = calm
+                if (avgInterval < 150) {
+                    currentMood = 'aggressive';
+                } else if (avgInterval > 400) {
+                    currentMood = 'calm';
+                } else {
+                    currentMood = 'neutral';
+                }
+            }
+            
+            document.getElementById('mood-text').textContent = currentMood.charAt(0).toUpperCase() + currentMood.slice(1);
+            document.getElementById('speed-text').textContent = typingSpeed;
+        }
+        
+        function getLetterType(letter) {
+            for (let type in letterTypes) {
+                if (letterTypes[type].includes(letter)) {
+                    return type;
+                }
+            }
+            return 'round'; // default
+        }
+        
+        function getRandomColor(type) {
+            const palette = colors[currentMood][type] || colors[currentMood].round;
+            return palette[Math.floor(Math.random() * palette.length)];
+        }
+        
+        function createTriangle(x, y, size, color) {
+            const shape = document.createElement('div');
+            shape.className = 'shape triangle solid ' + currentMood;
+            shape.style.width = size + 'px';
+            shape.style.height = size + 'px';
+            shape.style.left = x + 'px';
+            shape.style.top = y + 'px';
+            shape.style.setProperty('--tx', '-50%');
+            shape.style.setProperty('--ty', '-50%');
+            
+            // Create rounded triangle using clip-path
+            shape.style.background = `radial-gradient(circle at 50% 40%, ${color}, ${color}CC)`;
+            shape.style.clipPath = 'polygon(50% 0%, 100% 100%, 0% 100%)';
+            shape.style.filter = `drop-shadow(0 0 ${currentMood === 'aggressive' ? '20px' : '10px'} ${color}88)`;
+            shape.style.borderRadius = '15%';
+            
+            return shape;
+        }
+        
+        function createRound(x, y, size, color) {
+            const shape = document.createElement('div');
+            shape.className = 'shape round ' + currentMood;
+            shape.style.width = size + 'px';
+            shape.style.height = size + 'px';
+            shape.style.left = x + 'px';
+            shape.style.top = y + 'px';
+            shape.style.setProperty('--tx', '-50%');
+            shape.style.setProperty('--ty', '-50%');
+            shape.style.background = `radial-gradient(circle, ${color}, ${color}AA 60%, transparent)`;
+            shape.style.borderRadius = '50%';
+            shape.style.filter = `blur(${currentMood === 'calm' ? '5px' : '2px'})`;
+            
+            return shape;
+        }
+        
+        function createLine(x, y, length, color, isVertical) {
+            const shape = document.createElement('div');
+            shape.className = 'shape line-shape ' + currentMood;
             
             if (isVertical) {
-                line.style.width = '8px';
-                line.style.height = '100vh';
-                line.style.left = (Math.random() * 80 + 10) + '%';
-                line.style.top = '0';
-                line.style.transform = 'none';
+                shape.style.width = '4px';
+                shape.style.height = length + 'px';
             } else {
-                line.style.width = '100vw';
-                line.style.height = '8px';
-                line.style.top = (Math.random() * 80 + 10) + '%';
-                line.style.left = '0';
-                line.style.transform = 'none';
+                shape.style.width = length + 'px';
+                shape.style.height = '4px';
             }
             
-            line.style.transition = 'none';
-            canvas.appendChild(line);
-            lines.push(line);
-            return line;
+            shape.style.left = x + 'px';
+            shape.style.top = y + 'px';
+            shape.style.setProperty('--tx', '-50%');
+            shape.style.setProperty('--ty', '-50%');
+            shape.style.background = `linear-gradient(${isVertical ? '180deg' : '90deg'}, transparent, ${color}, transparent)`;
+            shape.style.boxShadow = `0 0 ${currentMood === 'aggressive' ? '15px' : '8px'} ${color}`;
+            
+            return shape;
         }
         
-        function getGridCell() {
-            // Find spaces between Mondrian lines to place shapes
-            if (lines.length === 0) {
-                return {
-                    x: window.innerWidth / 2,
-                    y: window.innerHeight / 2,
-                    width: window.innerWidth * 0.3,
-                    height: window.innerHeight * 0.3
-                };
-            }
+        function createWave(x, y, size, color) {
+            const shape = document.createElement('div');
+            shape.className = 'shape wave ' + currentMood;
+            shape.style.width = (size * 1.5) + 'px';
+            shape.style.height = size + 'px';
+            shape.style.left = x + 'px';
+            shape.style.top = y + 'px';
+            shape.style.setProperty('--tx', '-50%');
+            shape.style.setProperty('--ty', '-50%');
+            shape.style.background = `radial-gradient(ellipse, ${color}, ${color}99 50%, transparent)`;
+            shape.style.filter = `blur(${currentMood === 'calm' ? '6px' : '3px'})`;
             
-            // Get random position that fits within the grid
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            
-            return {
-                x: Math.random() * w * 0.8 + w * 0.1,
-                y: Math.random() * h * 0.8 + h * 0.1,
-                width: 200 + Math.random() * 300,
-                height: 200 + Math.random() * 300
-            };
+            return shape;
         }
         
-        function getCornerPosition(index) {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            const corners = [
-                { x: 0, y: 0 },           // Top-left
-                { x: w, y: 0 },           // Top-right
-                { x: w, y: h },           // Bottom-right
-                { x: 0, y: h }            // Bottom-left
-            ];
-            return corners[index % 4];
+        function createLiquid(x, y, size, color) {
+            const shape = document.createElement('div');
+            shape.className = 'shape liquid ' + currentMood;
+            shape.style.width = size + 'px';
+            shape.style.height = size + 'px';
+            shape.style.left = x + 'px';
+            shape.style.top = y + 'px';
+            shape.style.setProperty('--tx', '-50%');
+            shape.style.setProperty('--ty', '-50%');
+            shape.style.background = `radial-gradient(circle, ${color}, ${color}CC 40%, ${color}66 70%, transparent)`;
+            
+            // Add gravity effect - liquid flows down
+            setTimeout(() => {
+                shape.style.top = (y + 50 + Math.random() * 100) + 'px';
+            }, 100);
+            
+            return shape;
         }
         
-        function getFillPosition(index) {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            const centerX = w / 2;
-            const centerY = h / 2;
+        function createAir(x, y) {
+            const shape = document.createElement('div');
+            shape.className = 'shape air';
+            shape.style.width = '200px';
+            shape.style.height = '200px';
+            shape.style.left = x + 'px';
+            shape.style.top = y + 'px';
+            shape.style.background = 'radial-gradient(circle, rgba(255,255,255,0.3), transparent)';
+            shape.style.borderRadius = '50%';
             
-            // Start from corners and progressively fill empty spaces
-            const level = Math.floor(index / 4);
-            const posInLevel = index % 4;
+            // Push nearby shapes
+            shapes.forEach(s => {
+                if (s && s.parentElement) {
+                    const sx = parseFloat(s.style.left);
+                    const sy = parseFloat(s.style.top);
+                    const dx = sx - x;
+                    const dy = sy - y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist < 300) {
+                        const push = 50 * (1 - dist/300);
+                        s.style.left = (sx + dx * push/dist) + 'px';
+                        s.style.top = (sy + dy * push/dist) + 'px';
+                    }
+                }
+            });
             
-            // Calculate position based on subdividing the space
-            const segment = Math.floor(level / 4);
-            const subPos = level % 4;
-            
-            let baseX, baseY;
-            
-            // Corners first, then edges, then progressively fill inward
-            if (level === 0) {
-                // Four corners
-                const corners = [
-                    { x: 50, y: 50 },
-                    { x: w - 50, y: 50 },
-                    { x: w - 50, y: h - 50 },
-                    { x: 50, y: h - 50 }
-                ];
-                return corners[posInLevel];
-            } else if (level < 4) {
-                // Edge positions
-                const edgePositions = [
-                    { x: centerX, y: 50 },                    // Top
-                    { x: w - 50, y: centerY },                // Right
-                    { x: centerX, y: h - 50 },                // Bottom
-                    { x: 50, y: centerY }                     // Left
-                ];
-                return edgePositions[posInLevel];
-            } else {
-                // Fill remaining space with spiral-like pattern
-                const angle = index * 2.4;
-                const radius = (level - 4) * 80 + 150;
-                const maxRadius = Math.min(centerX, centerY) * 0.8;
-                const normalizedRadius = Math.min(radius, maxRadius);
-                
-                return {
-                    x: centerX + normalizedRadius * Math.cos(angle),
-                    y: centerY + normalizedRadius * Math.sin(angle)
-                };
-            }
+            setTimeout(() => shape.remove(), 3000);
+            return shape;
         }
         
-        function createSpiral(size, color) {
-            const svg = `
-                <svg width="${size}" height="${size}" viewBox="0 0 200 200" style="position: absolute; top: 0; left: 0;">
-                    <defs>
-                        <radialGradient id="spiral${position}">
-                            <stop offset="0%" style="stop-color:${color};stop-opacity:1" />
-                            <stop offset="60%" style="stop-color:${color};stop-opacity:0.6" />
-                            <stop offset="100%" style="stop-color:${color};stop-opacity:0" />
-                        </radialGradient>
-                    </defs>
-                    <path d="M 100 100 
-                             Q 100 50, 140 50
-                             Q 180 50, 180 90
-                             Q 180 140, 140 140
-                             Q 80 140, 80 100
-                             Q 80 60, 110 60
-                             Q 130 60, 130 80
-                             Q 130 90, 120 90"
-                          fill="none" 
-                          stroke="url(#spiral${position})" 
-                          stroke-width="20" 
-                          stroke-linecap="round"/>
-                </svg>
-            `;
-            return svg;
+        function createGravityWell(x, y, char) {
+            const shape = document.createElement('div');
+            shape.className = 'shape gravity';
+            const size = 300;
+            shape.style.width = size + 'px';
+            shape.style.height = size + 'px';
+            shape.style.left = x + 'px';
+            shape.style.top = y + 'px';
+            
+            // Dark gravity well
+            shape.style.background = 'radial-gradient(circle, rgba(0,0,0,0.6), rgba(100,50,150,0.3) 40%, transparent)';
+            shape.style.borderRadius = '50%';
+            
+            // Store well data
+            gravityWells.push({ element: shape, x, y, strength: 100 });
+            
+            // Attract nearby shapes
+            const attractInterval = setInterval(() => {
+                shapes.forEach(s => {
+                    if (s && s.parentElement && !s.classList.contains('gravity')) {
+                        const sx = parseFloat(s.style.left);
+                        const sy = parseFloat(s.style.top);
+                        const dx = x - sx;
+                        const dy = y - sy;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if (dist < 400 && dist > 10) {
+                            const pull = 0.5;
+                            s.style.left = (sx + dx * pull/dist) + 'px';
+                            s.style.top = (sy + dy * pull/dist) + 'px';
+                        }
+                    }
+                });
+            }, 50);
+            
+            setTimeout(() => {
+                clearInterval(attractInterval);
+                shape.classList.add('fade-out');
+                setTimeout(() => {
+                    shape.remove();
+                    const idx = gravityWells.findIndex(w => w.element === shape);
+                    if (idx > -1) gravityWells.splice(idx, 1);
+                }, 2000);
+            }, 10000);
+            
+            return shape;
         }
         
-        function createShape(letter) {
-            const lowerLetter = letter.toLowerCase();
+        function createShape(char) {
+            const now = Date.now();
+            typingTimes.push(now);
+            if (typingTimes.length > 15) typingTimes.shift();
+            analyzeMood();
             
-            // I and L create Mondrian-style lines
-            if ('il'.includes(lowerLetter)) {
-                const isVertical = Math.random() > 0.5;
-                createMondrianLine(isVertical);
-                position++;
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            
+            let shape;
+            const baseSize = currentMood === 'aggressive' ? 150 : currentMood === 'calm' ? 250 : 200;
+            
+            // Handle space as air
+            if (char === ' ') {
+                shape = createAir(x, y);
+                canvas.appendChild(shape);
                 return;
             }
             
-            const shape = document.createElement('div');
-            shape.className = 'shape';
+            // Handle punctuation as gravity wells
+            if ('.,!?;:'.includes(char)) {
+                shape = createGravityWell(x, y, char);
+                canvas.appendChild(shape);
+                return;
+            }
             
-            const cell = getGridCell();
+            const type = getLetterType(char);
+            const color = getRandomColor(type);
             
-            shape.style.left = cell.x + 'px';
-            shape.style.top = cell.y + 'px';
-            shape.style.opacity = '0';
-            
-            setTimeout(() => {
-                shape.style.transition = 'all 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
-                shape.style.opacity = '1';
-            }, 100);
-            
-            if (lowerLetter === 'o') {
-                const size = 400;
-                const color = colors.round[Math.floor(Math.random() * colors.round.length)];
-                shape.innerHTML = createSpiral(size, color);
-                shape.classList.add('pulse-circle');
-                shape.style.width = size + 'px';
-                shape.style.height = size + 'px';
-                shape.style.transform = 'translate(-50%, -50%)';
-            }
-            else if ('qcdgbp'.includes(lowerLetter)) {
-                const size = Math.min(cell.width, cell.height) * 0.8;
-                const color = colors.round[Math.floor(Math.random() * colors.round.length)];
-                shape.style.width = size + 'px';
-                shape.style.height = size + 'px';
-                shape.style.background = `radial-gradient(circle, ${color} 0%, ${color}99 30%, ${color}00 100%)`;
-                shape.style.borderRadius = '50%';
-                shape.style.transform = 'translate(-50%, -50%)';
-                shape.classList.add('pulse-circle');
-            }
-            else if (lowerLetter === 'w') {
-                const width = Math.min(800, cell.width * 1.5);
-                const height = 250;
-                shape.style.width = width + 'px';
-                shape.style.height = height + 'px';
-                const color = colors.wave[Math.floor(Math.random() * colors.wave.length)];
-                shape.style.background = `radial-gradient(ellipse, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
-                shape.style.transform = 'translate(-50%, -50%)';
-                shape.classList.add('wave-shape');
-            }
-            else if ('mnuvxy'.includes(lowerLetter)) {
-                const size = Math.min(cell.width, cell.height) * 0.7;
-                const color = colors.wave[Math.floor(Math.random() * colors.wave.length)];
-                shape.style.width = size + 'px';
-                shape.style.height = size + 'px';
-                shape.style.background = `radial-gradient(circle, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
-                shape.style.borderRadius = '60% 40% 70% 30% / 50% 60% 40% 50%';
-                shape.style.transform = 'translate(-50%, -50%)';
-                shape.classList.add('blob');
-            }
-            else if ('tkjhfr'.includes(lowerLetter)) {
-                const width = cell.width * 0.4;
-                const height = cell.height * 0.9;
-                const color = colors.blob[Math.floor(Math.random() * colors.blob.length)];
-                shape.style.width = width + 'px';
-                shape.style.height = height + 'px';
-                shape.style.background = `radial-gradient(ellipse, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
-                shape.style.borderRadius = '40% 60% 45% 55% / 30% 70% 30% 70%';
-                shape.style.transform = 'translate(-50%, -50%)';
-            }
-            else if ('azvse'.includes(lowerLetter)) {
-                const size = Math.min(cell.width, cell.height) * 0.7;
-                const color = colors.sharp[Math.floor(Math.random() * colors.sharp.length)];
-                shape.style.width = size + 'px';
-                shape.style.height = size + 'px';
-                shape.style.background = `radial-gradient(circle, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
-                shape.style.borderRadius = '25% 75% 35% 65% / 70% 30% 70% 30%';
-                shape.style.transform = 'translate(-50%, -50%) rotate(' + Math.random() * 360 + 'deg)';
-            }
-            else {
-                const size = Math.min(cell.width, cell.height) * 0.75;
-                const color = colors.blob[Math.floor(Math.random() * colors.blob.length)];
-                shape.style.width = size + 'px';
-                shape.style.height = size + 'px';
-                shape.style.background = `radial-gradient(circle, ${color} 0%, ${color}99 40%, ${color}00 100%)`;
-                shape.style.borderRadius = '50% 50% 45% 55% / 55% 45% 55% 45%';
-                shape.style.transform = 'translate(-50%, -50%)';
+            switch(type) {
+                case 'triangle':
+                    shape = createTriangle(x, y, baseSize * 0.8, color);
+                    break;
+                case 'round':
+                    shape = createRound(x, y, baseSize, color);
+                    break;
+                case 'line':
+                    shape = createLine(x, y, baseSize * 1.2, color, Math.random() > 0.5);
+                    break;
+                case 'wave':
+                    shape = createWave(x, y, baseSize * 0.7, color);
+                    break;
+                case 'liquid':
+                    shape = createLiquid(x, y, baseSize * 0.9, color);
+                    break;
+                default:
+                    shape = createRound(x, y, baseSize, color);
             }
             
             canvas.appendChild(shape);
             shapes.push(shape);
-            position++;
             
-            if (shapes.length > 80) {
+            // Limit shapes on canvas
+            if (shapes.length > 60) {
                 const oldShape = shapes.shift();
-                oldShape.style.opacity = '0';
-                setTimeout(() => oldShape.remove(), 500);
+                if (oldShape && oldShape.parentElement) {
+                    oldShape.classList.add('fade-out');
+                    setTimeout(() => oldShape.remove(), 2000);
+                }
             }
         }
         
         document.addEventListener('keypress', (e) => {
-            if (e.key && e.key.length === 1) {
+            if (e.key) {
                 createShape(e.key);
             }
         });
         
         function clearCanvas() {
             shapes.forEach(shape => {
-                shape.style.opacity = '0';
-                setTimeout(() => shape.remove(), 300);
+                if (shape && shape.parentElement) {
+                    shape.classList.add('fade-out');
+                    setTimeout(() => shape.remove(), 500);
+                }
             });
-            lines.forEach(line => {
-                line.style.opacity = '0';
-                setTimeout(() => line.remove(), 300);
+            gravityWells.forEach(well => {
+                if (well.element && well.element.parentElement) {
+                    well.element.classList.add('fade-out');
+                    setTimeout(() => well.element.remove(), 500);
+                }
             });
             shapes.length = 0;
-            lines.length = 0;
-            position = 0;
+            gravityWells.length = 0;
+            typingTimes = [];
+            currentMood = 'neutral';
+            typingSpeed = 0;
         }
     </script>
 </body>
