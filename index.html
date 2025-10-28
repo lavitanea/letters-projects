@@ -107,21 +107,22 @@
         const vowels = ['a', 'e', 'i', 'o', 'u', 'y'];
         const consonants = 'bcdfghjklmnpqrstvwxz'.split('');
         
-        // Flower colors for each vowel
+        // Pastel flower colors for each vowel
         const vowelColors = {
-            'a': { main: '#ffb3ba', dark: '#ff8fa3' },
-            'e': { main: '#ffc9de', dark: '#ffadd2' },
-            'i': { main: '#bae1ff', dark: '#95d5ff' },
-            'o': { main: '#e0b3ff', dark: '#d199ff' },
-            'u': { main: '#c9b3ff', dark: '#b399ff' },
-            'y': { main: '#d4c5f9', dark: '#c0aef5' }
+            'a': { pastel: '#ffd4d8', vibrant: '#ff6b7a' },
+            'e': { pastel: '#ffe0eb', vibrant: '#ff8fb8' },
+            'i': { pastel: '#d4e7ff', vibrant: '#6bb8ff' },
+            'o': { pastel: '#ebd4ff', vibrant: '#c76bff' },
+            'u': { pastel: '#dcd4ff', vibrant: '#9d6bff' },
+            'y': { pastel: '#e8deff', vibrant: '#b89dff' }
         };
 
         let branches = [];
         let flowers = [];
         let lastTypeTime = Date.now();
         let typeSpeed = 0;
-        let mainBranches = []; // Store the 4 main branches
+        let mainBranches = [];
+        let flowerPositions = []; // Track flower positions for overlap checking
 
         function calculateTypeSpeed() {
             const now = Date.now();
@@ -154,10 +155,11 @@
                 const controlY = corner.y + Math.sin(corner.angle) * length * 0.5;
                 
                 path.setAttribute('d', `M ${corner.x} ${corner.y} Q ${controlX} ${controlY} ${endX} ${endY}`);
-                path.setAttribute('stroke', '#8b7355');
-                path.setAttribute('stroke-width', '5');
+                path.setAttribute('stroke', '#a89080');
+                path.setAttribute('stroke-width', '8');
                 path.setAttribute('fill', 'none');
                 path.setAttribute('stroke-linecap', 'round');
+                path.setAttribute('opacity', '0.6');
                 
                 canvas.appendChild(path);
                 
@@ -175,7 +177,7 @@
 
         function getRandomPointOnMainBranch(branchIndex) {
             const branch = mainBranches[branchIndex];
-            const t = 0.3 + Math.random() * 0.5; // Random point between 30% and 80% of branch
+            const t = 0.3 + Math.random() * 0.5;
             
             const x = branch.startX + (branch.endX - branch.startX) * t;
             const y = branch.startY + (branch.endY - branch.startY) * t;
@@ -195,26 +197,34 @@
             
             // Sharp or curved based on speed
             if (speed > 0.5) {
-                // Sharp, direct line when fast
                 path.setAttribute('d', `M ${startX} ${startY} L ${endX} ${endY}`);
             } else {
-                // Curved when slow
                 const controlX = startX + Math.cos(angle + 0.2) * length * 0.6;
                 const controlY = startY + Math.sin(angle + 0.2) * length * 0.6;
                 path.setAttribute('d', `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`);
             }
             
-            // Color based on speed
-            const speedColor = Math.floor(speed * 155);
-            const r = 139 - speedColor;
-            const g = 115 - speedColor;
-            const b = 85 - speedColor;
-            const color = `rgb(${r}, ${g}, ${b})`;
+            // Color and thickness based on speed
+            let color, strokeWidth, opacity;
+            
+            if (speed > 0.5) {
+                // Fast: black, thick, solid
+                const darkness = Math.floor((1 - speed) * 50);
+                color = `rgb(${darkness}, ${darkness}, ${darkness})`;
+                strokeWidth = 6 + speed * 8; // Up to 14px thick
+                opacity = 1;
+            } else {
+                // Slow: light brown, thinner, transparent
+                color = '#c4a895';
+                strokeWidth = 3 + speed * 3; // 3-6px
+                opacity = 0.3 + speed * 0.3; // 30-60%
+            }
             
             path.setAttribute('stroke', color);
-            path.setAttribute('stroke-width', Math.max(2, 2 + speed * 3));
+            path.setAttribute('stroke-width', strokeWidth);
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('opacity', opacity);
             
             canvas.appendChild(path);
             branches.push({ element: path, endX, endY, angle });
@@ -222,52 +232,120 @@
             return { x: endX, y: endY };
         }
 
-        function createFlower(x, y, vowel, speed) {
-            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            group.setAttribute('class', 'flower');
-            group.style.left = x + 'px';
-            group.style.top = y + 'px';
+        function checkOverlap(x, y, size) {
+            let overlapCount = 0;
+            const checkRadius = size * 1.5;
             
+            for (let pos of flowerPositions) {
+                const distance = Math.hypot(x - pos.x, y - pos.y);
+                if (distance < (checkRadius + pos.size)) {
+                    overlapCount++;
+                }
+            }
+            
+            return overlapCount;
+        }
+
+        function findNonOverlappingPosition(baseX, baseY, size, maxAttempts = 20) {
+            for (let i = 0; i < maxAttempts; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 40 + Math.random() * 60;
+                const x = baseX + Math.cos(angle) * distance;
+                const y = baseY + Math.sin(angle) * distance;
+                
+                // Keep within bounds
+                if (x < 50 || x > window.innerWidth - 50 || y < 100 || y > window.innerHeight - 50) {
+                    continue;
+                }
+                
+                const overlaps = checkOverlap(x, y, size);
+                const maxAllowedOverlaps = Math.floor(flowerPositions.length * 0.3);
+                
+                if (overlaps <= maxAllowedOverlaps) {
+                    return { x, y };
+                }
+            }
+            // If no good position found, return original
+            return { x: baseX, y: baseY };
+        }
+
+        function createFlower(x, y, vowel, speed) {
             const colors = vowelColors[vowel];
             const petalCount = 6;
             
-            // Size and sharpness based on speed
-            const baseSize = 12;
-            const size = baseSize + speed * 25; // Grows much longer when fast
-            const sharpness = speed * 0.8; // More extreme sharpness
+            // Dramatic size difference
+            const baseSize = speed > 0.5 ? 20 + speed * 40 : 15; // Fast: much bigger
+            const size = baseSize;
             
-            // Opacity based on speed
-            const opacity = 0.3 + speed * 0.7; // 30% to 100%
+            // Check for overlap and adjust position
+            const position = findNonOverlappingPosition(x, y, size);
+            x = position.x;
+            y = position.y;
+            
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.setAttribute('class', 'flower');
+            
+            // Opacity: dramatic difference
+            const opacity = speed > 0.5 ? 0.9 + speed * 0.1 : 0.25 + speed * 0.25; // Slow: 25-50%, Fast: 90-100%
+            
+            // Color choice
+            const color = speed > 0.5 ? colors.vibrant : colors.pastel;
             
             // Create petals
             for (let i = 0; i < petalCount; i++) {
                 const angle = (i * 360 / petalCount) * Math.PI / 180;
-                const petal = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
                 
-                // Sharp petals: very thin rx, long ry
-                const rx = size * (0.15 + sharpness * 0.05); // Very thin
-                const ry = size * (1.2 + sharpness * 0.8); // Very long
-                
-                const petalDistance = size * (0.4 + sharpness * 0.3);
-                
-                petal.setAttribute('cx', x + Math.cos(angle) * petalDistance);
-                petal.setAttribute('cy', y + Math.sin(angle) * petalDistance);
-                petal.setAttribute('rx', rx);
-                petal.setAttribute('ry', ry);
-                petal.setAttribute('fill', speed > 0.5 ? colors.dark : colors.main);
-                petal.setAttribute('opacity', opacity);
-                petal.setAttribute('transform', `rotate(${(i * 360 / petalCount) + 90} ${x + Math.cos(angle) * petalDistance} ${y + Math.sin(angle) * petalDistance})`);
-                
-                group.appendChild(petal);
+                if (speed > 0.5) {
+                    // FAST: Sharp polygon petals with pointed tips
+                    const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    
+                    const length = size * (1.5 + speed * 0.8);
+                    const width = size * 0.2;
+                    const tipX = x + Math.cos(angle) * length;
+                    const tipY = y + Math.sin(angle) * length;
+                    
+                    const perpAngle = angle + Math.PI / 2;
+                    const baseLeft = {
+                        x: x + Math.cos(perpAngle) * width,
+                        y: y + Math.sin(perpAngle) * width
+                    };
+                    const baseRight = {
+                        x: x - Math.cos(perpAngle) * width,
+                        y: y - Math.sin(perpAngle) * width
+                    };
+                    
+                    polygon.setAttribute('points', `${tipX},${tipY} ${baseLeft.x},${baseLeft.y} ${baseRight.x},${baseRight.y}`);
+                    polygon.setAttribute('fill', color);
+                    polygon.setAttribute('opacity', opacity);
+                    
+                    group.appendChild(polygon);
+                } else {
+                    // SLOW: Round ellipse petals
+                    const petal = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                    
+                    const rx = size * 0.5; // Round, not thin
+                    const ry = size * 0.8; // Not very long
+                    const petalDistance = size * 0.4;
+                    
+                    petal.setAttribute('cx', x + Math.cos(angle) * petalDistance);
+                    petal.setAttribute('cy', y + Math.sin(angle) * petalDistance);
+                    petal.setAttribute('rx', rx);
+                    petal.setAttribute('ry', ry);
+                    petal.setAttribute('fill', color);
+                    petal.setAttribute('opacity', opacity);
+                    petal.setAttribute('transform', `rotate(${(i * 360 / petalCount) + 90} ${x + Math.cos(angle) * petalDistance} ${y + Math.sin(angle) * petalDistance})`);
+                    
+                    group.appendChild(petal);
+                }
             }
             
             // Center
-            const centerSize = Math.max(3, size * 0.2);
+            const centerSize = speed > 0.5 ? size * 0.25 : size * 0.35;
             const center = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             center.setAttribute('cx', x);
             center.setAttribute('cy', y);
             center.setAttribute('r', centerSize);
-            center.setAttribute('fill', '#ffd966');
+            center.setAttribute('fill', speed > 0.5 ? '#ffb347' : '#ffd966');
             center.setAttribute('opacity', opacity);
             group.appendChild(center);
             
@@ -277,6 +355,7 @@
             
             canvas.appendChild(group);
             flowers.push(group);
+            flowerPositions.push({ x, y, size });
         }
 
         function handleKeyPress(e) {
@@ -292,32 +371,37 @@
             }
             
             if (vowels.includes(key)) {
-                // Create flower away from branches when slow, can overlap when fast
+                // Create flower
                 let x, y;
-                const branchIndex = Math.floor(Math.random() * 4);
-                const point = getRandomPointOnMainBranch(branchIndex);
                 
-                // Distance from branch based on speed
-                const distance = typeSpeed < 0.5 ? 60 + Math.random() * 40 : 20 + Math.random() * 30;
-                const offsetAngle = point.angle + Math.PI / 2 + (Math.random() - 0.5) * Math.PI;
-                
-                x = point.x + Math.cos(offsetAngle) * distance;
-                y = point.y + Math.sin(offsetAngle) * distance;
+                // Place flowers throughout the screen
+                if (Math.random() > 0.3 && mainBranches.length > 0) {
+                    const branchIndex = Math.floor(Math.random() * 4);
+                    const point = getRandomPointOnMainBranch(branchIndex);
+                    
+                    const distance = typeSpeed < 0.5 ? 70 + Math.random() * 50 : 30 + Math.random() * 40;
+                    const offsetAngle = Math.random() * Math.PI * 2;
+                    
+                    x = point.x + Math.cos(offsetAngle) * distance;
+                    y = point.y + Math.sin(offsetAngle) * distance;
+                } else {
+                    // Random position on screen
+                    x = 100 + Math.random() * (window.innerWidth - 200);
+                    y = 150 + Math.random() * (window.innerHeight - 200);
+                }
                 
                 createFlower(x, y, key, typeSpeed);
             } else if (consonants.includes(key)) {
-                // Create branch growing from main branches or previous branches
+                // Create branch
                 let startX, startY, baseAngle;
                 
                 if (branches.length === 0 || Math.random() > 0.7) {
-                    // Start from main branch
                     const branchIndex = Math.floor(Math.random() * 4);
                     const point = getRandomPointOnMainBranch(branchIndex);
                     startX = point.x;
                     startY = point.y;
                     baseAngle = point.angle;
                 } else {
-                    // Grow from existing branch
                     const lastBranch = branches[branches.length - 1];
                     startX = lastBranch.endX;
                     startY = lastBranch.endY;
@@ -329,7 +413,6 @@
         }
 
         function clearCanvas() {
-            // Add falling animation to branches
             mainBranches.forEach(branch => {
                 branch.element.classList.add('falling');
             });
@@ -342,7 +425,6 @@
                 flower.classList.add('falling');
             });
             
-            // Clear arrays and remove elements after animation
             setTimeout(() => {
                 mainBranches.forEach(branch => branch.element.remove());
                 branches.forEach(branch => branch.element.remove());
@@ -350,13 +432,13 @@
                 mainBranches = [];
                 branches = [];
                 flowers = [];
+                flowerPositions = [];
             }, 2000);
         }
 
         document.addEventListener('keypress', handleKeyPress);
         clearBtn.addEventListener('click', clearCanvas);
 
-        // Set canvas size
         function resizeCanvas() {
             canvas.setAttribute('width', window.innerWidth);
             canvas.setAttribute('height', window.innerHeight);
