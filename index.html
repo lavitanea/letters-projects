@@ -64,12 +64,13 @@ window.addEventListener("resize", () => {
   height = canvas.height = window.innerHeight;
 });
 
-// ─── STATE ──────────────────────────────────────────────
+// === GLOBAL STATE ===
 let branches = [];
 let flowers  = [];
 let lastKeyTime = Date.now();
 let typingSpeed = 0;
 let stage = 1;
+let lastBranch = null; // keep track of most recent consonant branch
 
 const vowelColors = {
   a: "#f7b5d5",
@@ -79,7 +80,7 @@ const vowelColors = {
   u: "#d1b5f7",
 };
 
-// ─── SPEED / STAGE ─────────────────────────────────────
+// === STAGE + SPEED ===
 function getSpeedStage(s) {
   if (s < 1) return 1;
   if (s < 2) return 2;
@@ -104,19 +105,18 @@ function updateSpeed() {
   }, ${248 - 180 * bgDark})`;
 }
 
-// ─── TREE GROWTH ───────────────────────────────────────
+// === UTILS ===
 function random(min, max) {
   return Math.random() * (max - min) + min;
 }
 
+// === TREE + FLOWERS ===
 function addBranch(parent) {
-  const angleVar = random(-Math.PI / 6, Math.PI / 6);
-  const len = random(30, 60) * (1 + stage * 0.2);
-  const thick = 1.2 + stage * 0.8;
+  const angleVar = random(-Math.PI / 8, Math.PI / 8);
+  const len = random(40, 80) * (1 + stage * 0.15);
+  const thick = 1.5 + stage * 0.8;
   const dark = Math.min(0.2 + stage * 0.18, 1);
-  const color = `rgb(${180 - 140 * dark}, ${130 - 90 * dark}, ${
-    60 - 60 * dark
-  })`;
+  const color = `rgb(${180 - 140 * dark}, ${130 - 90 * dark}, ${60 - 60 * dark})`;
 
   const newX = parent.x2 + Math.cos(parent.angle + angleVar) * len;
   const newY = parent.y2 + Math.sin(parent.angle + angleVar) * len;
@@ -146,44 +146,38 @@ function drawBranches() {
   });
 }
 
-// ─── FLOWERS (FLOATING) ─────────────────────────────────
-function addFlower(branch, letter) {
-  const baseColor = vowelColors[letter.toLowerCase()] || "#fce4ec";
-  const petals = 5;
-  const len = 8 + stage * 5;
+function addFlowerBetweenBranches(b1, b2, vowel) {
+  if (!b1 || !b2) return;
+  const baseColor = vowelColors[vowel.toLowerCase()] || "#fce4ec";
   const opacity = [0.3, 0.45, 0.65, 0.85, 1][stage - 1];
+  const petalCount = 5;
+  const len = 8 + stage * 5;
 
-  const t = random(0.3, 0.7);
-  const x = branch.x1 + (branch.x2 - branch.x1) * t;
-  const y = branch.y1 + (branch.y2 - branch.y1) * t;
+  // midpoint between the two branches
+  const x = (b1.x2 + b2.x1) / 2 + random(-10, 10);
+  const y = (b1.y2 + b2.y1) / 2 + random(-10, 10);
 
   flowers.push({
     x,
     y,
-    vx: random(-0.2, 0.4),
-    vy: random(-0.6, -0.1),
     baseColor,
-    petals,
+    petalCount,
     len,
     opacity,
-    angle: random(0, Math.PI * 2),
-    rotationSpeed: random(-0.01, 0.01),
+    floatPhase: Math.random() * Math.PI * 2,
   });
 }
 
-function drawFlowers() {
+function drawFlowers(time) {
   flowers.forEach((f) => {
-    // motion
-    f.x += f.vx;
-    f.y += f.vy;
-    f.angle += f.rotationSpeed * (stage >= 4 ? 3 : 1);
+    // float gently up and down in place
+    const floatY = f.y + Math.sin(time / 800 + f.floatPhase) * 5;
+    const floatX = f.x + Math.cos(time / 1000 + f.floatPhase) * 3;
 
     ctx.save();
-    ctx.translate(f.x, f.y);
-    ctx.rotate(f.angle);
-
-    for (let i = 0; i < f.petals; i++) {
-      ctx.rotate((2 * Math.PI) / f.petals);
+    ctx.translate(floatX, floatY);
+    for (let i = 0; i < f.petalCount; i++) {
+      ctx.rotate((2 * Math.PI) / f.petalCount);
       ctx.beginPath();
       ctx.fillStyle = f.baseColor;
       ctx.globalAlpha = f.opacity;
@@ -193,11 +187,11 @@ function drawFlowers() {
       } else if (stage === 3 || stage === 4) {
         ctx.ellipse(0, 10, 6 + stage * 3, 10 + stage * 5, 0, 0, 2 * Math.PI);
       } else {
-        // stage 5: spiky, dangerous
+        // Stage 5: sharp, dangerous
         ctx.moveTo(0, 0);
-        ctx.lineTo(4, 15 + stage * 5);
-        ctx.lineTo(0, 20 + stage * 7);
-        ctx.lineTo(-4, 15 + stage * 5);
+        ctx.lineTo(4, 15 + stage * 6);
+        ctx.lineTo(0, 22 + stage * 7);
+        ctx.lineTo(-4, 15 + stage * 6);
         ctx.closePath();
       }
       ctx.fill();
@@ -205,21 +199,18 @@ function drawFlowers() {
     ctx.restore();
     ctx.globalAlpha = 1;
   });
-
-  // remove floating flowers that leave screen
-  flowers = flowers.filter((f) => f.y > -50 && f.x < width + 50);
 }
 
-// ─── DRAW LOOP ──────────────────────────────────────────
-function draw() {
+// === DRAW LOOP ===
+function draw(time) {
   ctx.clearRect(0, 0, width, height);
   drawBranches();
-  drawFlowers();
+  drawFlowers(time);
   requestAnimationFrame(draw);
 }
-draw();
+draw(0);
 
-// ─── BASE TRUNK ─────────────────────────────────────────
+// === INITIAL BASE BRANCH ===
 const base = {
   x1: 50,
   y1: height / 2,
@@ -230,23 +221,29 @@ const base = {
   thickness: 2,
 };
 branches.push(base);
+lastBranch = base;
 
-// ─── KEY EVENTS ─────────────────────────────────────────
+// === KEY EVENTS ===
 document.addEventListener("keydown", (e) => {
   if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
     updateSpeed();
 
     if ("aeiou".includes(e.key.toLowerCase())) {
-      const branch = branches[Math.floor(random(0, branches.length))];
-      addFlower(branch, e.key);
+      // vowel: between last two branches
+      if (branches.length > 1) {
+        const b1 = branches[branches.length - 2];
+        const b2 = branches[branches.length - 1];
+        addFlowerBetweenBranches(b1, b2, e.key);
+      }
     } else {
-      const parent = branches[Math.floor(random(0, branches.length))];
-      addBranch(parent);
+      // consonant: extend the tree
+      const newB = addBranch(lastBranch);
+      lastBranch = newB;
     }
   }
 });
 
-// ─── CLEAR BUTTON ───────────────────────────────────────
+// === CLEAR ===
 document.getElementById("clearBtn").addEventListener("click", () => {
   const fall = setInterval(() => {
     branches.forEach((b) => {
@@ -258,6 +255,7 @@ document.getElementById("clearBtn").addEventListener("click", () => {
       clearInterval(fall);
       branches = [base];
       flowers = [];
+      lastBranch = base;
     }
   }, 30);
 });
