@@ -13,9 +13,10 @@
 
         body {
             font-family: 'Georgia', serif;
-            background: #fafaf8;
+            background: #e8f4f8;
             overflow: hidden;
             height: 100vh;
+            transition: background-color 0.3s ease;
         }
 
         #title {
@@ -29,6 +30,24 @@
             z-index: 1000;
             text-transform: lowercase;
             font-weight: 300;
+        }
+
+        #speed-indicator {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            color: #6b5d52;
+            letter-spacing: 2px;
+            z-index: 1000;
+            text-transform: lowercase;
+            font-weight: 300;
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
         }
 
         #clear-btn {
@@ -97,38 +116,93 @@
 </head>
 <body>
     <div id="title">visualising words</div>
+    <div id="speed-indicator">stage 1: very slow</div>
     <svg id="canvas"></svg>
     <button id="clear-btn">clear</button>
 
     <script>
         const canvas = document.getElementById('canvas');
         const clearBtn = document.getElementById('clear-btn');
+        const speedIndicator = document.getElementById('speed-indicator');
         
         const vowels = ['a', 'e', 'i', 'o', 'u', 'y'];
         const consonants = 'bcdfghjklmnpqrstvwxz'.split('');
         
-        // Pastel flower colors for each vowel
+        // Flower colors for each vowel with progressive vibrancy
         const vowelColors = {
-            'a': { pastel: '#ffd4d8', vibrant: '#ff6b7a' },
-            'e': { pastel: '#ffe0eb', vibrant: '#ff8fb8' },
-            'i': { pastel: '#d4e7ff', vibrant: '#6bb8ff' },
-            'o': { pastel: '#ebd4ff', vibrant: '#c76bff' },
-            'u': { pastel: '#dcd4ff', vibrant: '#9d6bff' },
-            'y': { pastel: '#e8deff', vibrant: '#b89dff' }
+            'a': { 
+                stage1: '#ffe8ea', stage2: '#ffd4d8', stage3: '#ffb3ba', 
+                stage4: '#ff8fa3', stage5: '#ff6b7a' 
+            },
+            'e': { 
+                stage1: '#fff0f5', stage2: '#ffe0eb', stage3: '#ffc9de', 
+                stage4: '#ffadd2', stage5: '#ff8fb8' 
+            },
+            'i': { 
+                stage1: '#e8f4ff', stage2: '#d4e7ff', stage3: '#bae1ff', 
+                stage4: '#95d5ff', stage5: '#6bb8ff' 
+            },
+            'o': { 
+                stage1: '#f5e8ff', stage2: '#ebd4ff', stage3: '#e0b3ff', 
+                stage4: '#d199ff', stage5: '#c76bff' 
+            },
+            'u': { 
+                stage1: '#ede8ff', stage2: '#dcd4ff', stage3: '#c9b3ff', 
+                stage4: '#b399ff', stage5: '#9d6bff' 
+            },
+            'y': { 
+                stage1: '#f3edff', stage2: '#e8deff', stage3: '#d4c5f9', 
+                stage4: '#c0aef5', stage5: '#b89dff' 
+            }
         };
+
+        // Speed stage labels
+        const speedStages = [
+            { name: 'stage 1: very slow', min: 0, max: 0.2 },
+            { name: 'stage 2: slow', min: 0.2, max: 0.4 },
+            { name: 'stage 3: medium', min: 0.4, max: 0.6 },
+            { name: 'stage 4: fast', min: 0.6, max: 0.8 },
+            { name: 'stage 5: very fast', min: 0.8, max: 1.0 }
+        ];
 
         let branches = [];
         let flowers = [];
         let lastTypeTime = Date.now();
         let typeSpeed = 0;
+        let currentStage = 1;
         let mainBranches = [];
-        let flowerPositions = []; // Track flower positions for overlap checking
+        let flowerPositions = [];
 
         function calculateTypeSpeed() {
             const now = Date.now();
             const timeDiff = now - lastTypeTime;
             typeSpeed = Math.max(0, Math.min(1, 1 - (timeDiff / 800)));
             lastTypeTime = now;
+            updateSpeedStage();
+            updateBackground();
+        }
+
+        function updateSpeedStage() {
+            for (let i = 0; i < speedStages.length; i++) {
+                if (typeSpeed >= speedStages[i].min && typeSpeed <= speedStages[i].max) {
+                    if (currentStage !== i + 1) {
+                        currentStage = i + 1;
+                        speedIndicator.textContent = speedStages[i].name;
+                        speedIndicator.style.transform = 'translateX(-50%) scale(1.1)';
+                        setTimeout(() => {
+                            speedIndicator.style.transform = 'translateX(-50%) scale(1)';
+                        }, 200);
+                    }
+                    break;
+                }
+            }
+        }
+
+        function updateBackground() {
+            // Background transitions from light blue to black
+            const lightness = Math.floor(232 - (typeSpeed * 232)); // 232 to 0
+            const blue = Math.floor(248 - (typeSpeed * 248)); // 248 to 0
+            document.body.style.backgroundColor = `rgb(${lightness}, ${lightness + Math.floor((blue - lightness) * (1 - typeSpeed))}, ${blue})`;
         }
 
         function initMainBranches() {
@@ -144,7 +218,7 @@
                 { x: 80, y: window.innerHeight - 80, angle: Math.atan2(centerY - (window.innerHeight - 80), centerX - 80) }
             ];
             
-            corners.forEach((corner, index) => {
+            corners.forEach((corner) => {
                 const distance = Math.hypot(centerX - corner.x, centerY - corner.y);
                 const length = distance * 0.6;
                 const endX = corner.x + Math.cos(corner.angle) * length;
@@ -158,7 +232,7 @@
                 path.setAttribute('stroke', '#a89080');
                 path.setAttribute('stroke-width', '8');
                 path.setAttribute('fill', 'none');
-                path.setAttribute('stroke-linecap', 'round');
+                path.setAttribute('stroke-linecap', 'butt');
                 path.setAttribute('opacity', '0.6');
                 
                 canvas.appendChild(path);
@@ -211,19 +285,19 @@
                 // Fast: black, thick, solid
                 const darkness = Math.floor((1 - speed) * 50);
                 color = `rgb(${darkness}, ${darkness}, ${darkness})`;
-                strokeWidth = 6 + speed * 8; // Up to 14px thick
+                strokeWidth = 6 + speed * 8;
                 opacity = 1;
             } else {
                 // Slow: light brown, thinner, transparent
                 color = '#c4a895';
-                strokeWidth = 3 + speed * 3; // 3-6px
-                opacity = 0.3 + speed * 0.3; // 30-60%
+                strokeWidth = 3 + speed * 3;
+                opacity = 0.3 + speed * 0.3;
             }
             
             path.setAttribute('stroke', color);
             path.setAttribute('stroke-width', strokeWidth);
             path.setAttribute('fill', 'none');
-            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linecap', 'butt'); // Sharp ends
             path.setAttribute('opacity', opacity);
             
             canvas.appendChild(path);
@@ -253,7 +327,6 @@
                 const x = baseX + Math.cos(angle) * distance;
                 const y = baseY + Math.sin(angle) * distance;
                 
-                // Keep within bounds
                 if (x < 50 || x > window.innerWidth - 50 || y < 100 || y > window.innerHeight - 50) {
                     continue;
                 }
@@ -265,7 +338,6 @@
                     return { x, y };
                 }
             }
-            // If no good position found, return original
             return { x: baseX, y: baseY };
         }
 
@@ -273,9 +345,24 @@
             const colors = vowelColors[vowel];
             const petalCount = 6;
             
-            // Dramatic size difference
-            const baseSize = speed > 0.5 ? 20 + speed * 40 : 15; // Fast: much bigger
-            const size = baseSize;
+            // Determine stage (1-5) based on speed
+            let stage;
+            if (speed < 0.2) stage = 1;
+            else if (speed < 0.4) stage = 2;
+            else if (speed < 0.6) stage = 3;
+            else if (speed < 0.8) stage = 4;
+            else stage = 5;
+            
+            // Get color for stage
+            const color = colors[`stage${stage}`];
+            
+            // Size progression: stage 1 smallest, stage 5 largest
+            const baseSizes = [12, 18, 25, 35, 50];
+            const size = baseSizes[stage - 1];
+            
+            // Opacity progression
+            const opacities = [0.3, 0.45, 0.65, 0.85, 1.0];
+            const opacity = opacities[stage - 1];
             
             // Check for overlap and adjust position
             const position = findNonOverlappingPosition(x, y, size);
@@ -285,21 +372,63 @@
             const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             group.setAttribute('class', 'flower');
             
-            // Opacity: dramatic difference
-            const opacity = speed > 0.5 ? 0.9 + speed * 0.1 : 0.25 + speed * 0.25; // Slow: 25-50%, Fast: 90-100%
-            
-            // Color choice
-            const color = speed > 0.5 ? colors.vibrant : colors.pastel;
-            
-            // Create petals
+            // Create petals based on stage
             for (let i = 0; i < petalCount; i++) {
                 const angle = (i * 360 / petalCount) * Math.PI / 180;
                 
-                if (speed > 0.5) {
-                    // FAST: Sharp polygon petals with pointed tips
+                if (stage === 1 || stage === 2) {
+                    // STAGES 1-2: Very round, friendly, soft petals (circles)
+                    const petal = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    const petalSize = size * (stage === 1 ? 0.5 : 0.6);
+                    const petalDistance = size * (stage === 1 ? 0.45 : 0.5);
+                    
+                    petal.setAttribute('cx', x + Math.cos(angle) * petalDistance);
+                    petal.setAttribute('cy', y + Math.sin(angle) * petalDistance);
+                    petal.setAttribute('r', petalSize);
+                    petal.setAttribute('fill', color);
+                    petal.setAttribute('opacity', opacity);
+                    
+                    group.appendChild(petal);
+                    
+                } else if (stage === 3) {
+                    // STAGE 3: Rounded ellipse petals
+                    const petal = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                    const rx = size * 0.45;
+                    const ry = size * 0.75;
+                    const petalDistance = size * 0.4;
+                    
+                    petal.setAttribute('cx', x + Math.cos(angle) * petalDistance);
+                    petal.setAttribute('cy', y + Math.sin(angle) * petalDistance);
+                    petal.setAttribute('rx', rx);
+                    petal.setAttribute('ry', ry);
+                    petal.setAttribute('fill', color);
+                    petal.setAttribute('opacity', opacity);
+                    petal.setAttribute('transform', `rotate(${(i * 360 / petalCount) + 90} ${x + Math.cos(angle) * petalDistance} ${y + Math.sin(angle) * petalDistance})`);
+                    
+                    group.appendChild(petal);
+                    
+                } else if (stage === 4) {
+                    // STAGE 4: Longer, more pointed ellipse
+                    const petal = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                    const rx = size * 0.3;
+                    const ry = size * 1.1;
+                    const petalDistance = size * 0.35;
+                    
+                    petal.setAttribute('cx', x + Math.cos(angle) * petalDistance);
+                    petal.setAttribute('cy', y + Math.sin(angle) * petalDistance);
+                    petal.setAttribute('rx', rx);
+                    petal.setAttribute('ry', ry);
+                    petal.setAttribute('fill', color);
+                    petal.setAttribute('opacity', opacity);
+                    petal.setAttribute('transform', `rotate(${(i * 360 / petalCount) + 90} ${x + Math.cos(angle) * petalDistance} ${y + Math.sin(angle) * petalDistance})`);
+                    
+                    group.appendChild(petal);
+                    
+                } else {
+                    // STAGE 5: Sharp triangular petals, longest and sharpest
                     const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                     
-                    const length = size * (1.5 + speed * 0.8);
+                    const length = size * 1.8;
                     const width = size * 0.2;
                     const tipX = x + Math.cos(angle) * length;
                     const tipY = y + Math.sin(angle) * length;
@@ -319,33 +448,16 @@
                     polygon.setAttribute('opacity', opacity);
                     
                     group.appendChild(polygon);
-                } else {
-                    // SLOW: Round ellipse petals
-                    const petal = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
-                    
-                    const rx = size * 0.5; // Round, not thin
-                    const ry = size * 0.8; // Not very long
-                    const petalDistance = size * 0.4;
-                    
-                    petal.setAttribute('cx', x + Math.cos(angle) * petalDistance);
-                    petal.setAttribute('cy', y + Math.sin(angle) * petalDistance);
-                    petal.setAttribute('rx', rx);
-                    petal.setAttribute('ry', ry);
-                    petal.setAttribute('fill', color);
-                    petal.setAttribute('opacity', opacity);
-                    petal.setAttribute('transform', `rotate(${(i * 360 / petalCount) + 90} ${x + Math.cos(angle) * petalDistance} ${y + Math.sin(angle) * petalDistance})`);
-                    
-                    group.appendChild(petal);
                 }
             }
             
             // Center
-            const centerSize = speed > 0.5 ? size * 0.25 : size * 0.35;
+            const centerSize = size * 0.3;
             const center = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             center.setAttribute('cx', x);
             center.setAttribute('cy', y);
             center.setAttribute('r', centerSize);
-            center.setAttribute('fill', speed > 0.5 ? '#ffb347' : '#ffd966');
+            center.setAttribute('fill', stage <= 2 ? '#ffd966' : '#ffb347');
             center.setAttribute('opacity', opacity);
             group.appendChild(center);
             
@@ -365,16 +477,13 @@
             
             calculateTypeSpeed();
             
-            // Initialize main branches on first key
             if (mainBranches.length === 0) {
                 initMainBranches();
             }
             
             if (vowels.includes(key)) {
-                // Create flower
                 let x, y;
                 
-                // Place flowers throughout the screen
                 if (Math.random() > 0.3 && mainBranches.length > 0) {
                     const branchIndex = Math.floor(Math.random() * 4);
                     const point = getRandomPointOnMainBranch(branchIndex);
@@ -385,14 +494,12 @@
                     x = point.x + Math.cos(offsetAngle) * distance;
                     y = point.y + Math.sin(offsetAngle) * distance;
                 } else {
-                    // Random position on screen
                     x = 100 + Math.random() * (window.innerWidth - 200);
                     y = 150 + Math.random() * (window.innerHeight - 200);
                 }
                 
                 createFlower(x, y, key, typeSpeed);
             } else if (consonants.includes(key)) {
-                // Create branch
                 let startX, startY, baseAngle;
                 
                 if (branches.length === 0 || Math.random() > 0.7) {
@@ -433,6 +540,9 @@
                 branches = [];
                 flowers = [];
                 flowerPositions = [];
+                document.body.style.backgroundColor = '#e8f4f8';
+                currentStage = 1;
+                speedIndicator.textContent = 'stage 1: very slow';
             }, 2000);
         }
 
