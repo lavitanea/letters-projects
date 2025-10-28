@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Visualising Words</title>
 <style>
   body {
     margin: 0;
     overflow: hidden;
     background-color: #e8f4f8;
-    font-family: 'Poppins', sans-serif;
-    transition: background 0.5s ease;
+    font-family: "Poppins", sans-serif;
+    transition: background 0.6s ease;
   }
 
   h1 {
@@ -39,55 +39,52 @@
     transition: all 0.3s;
     font-weight: bold;
   }
-
   #clearBtn:hover {
     background: #ffdddd;
     border-color: #ff8888;
   }
 
-  canvas {
-    display: block;
-  }
+  canvas { display: block; }
 </style>
 </head>
 <body>
-  <h1>Visualising Words</h1>
-  <div id="speedIndicator">Typing Stage: 1 (Very Slow)</div>
-  <button id="clearBtn">Clear</button>
-  <canvas id="visualCanvas"></canvas>
+<h1>Visualising Words</h1>
+<div id="speedIndicator">Typing Stage: 1 (Very Slow)</div>
+<button id="clearBtn">Clear</button>
+<canvas id="visualCanvas"></canvas>
 
 <script>
 const canvas = document.getElementById("visualCanvas");
 const ctx = canvas.getContext("2d");
-let width = canvas.width = window.innerWidth;
-let height = canvas.height = window.innerHeight;
+let width = (canvas.width = window.innerWidth);
+let height = (canvas.height = window.innerHeight);
 
 window.addEventListener("resize", () => {
   width = canvas.width = window.innerWidth;
   height = canvas.height = window.innerHeight;
 });
 
-// ==== State ====
+// ─── STATE ──────────────────────────────────────────────
 let branches = [];
-let flowers = [];
+let flowers  = [];
 let lastKeyTime = Date.now();
 let typingSpeed = 0;
 let stage = 1;
 
 const vowelColors = {
-  'a': '#f7b5d5',
-  'e': '#f9d6a3',
-  'i': '#c5e1a5',
-  'o': '#b5d5f7',
-  'u': '#d1b5f7'
+  a: "#f7b5d5",
+  e: "#f9d6a3",
+  i: "#c5e1a5",
+  o: "#b5d5f7",
+  u: "#d1b5f7",
 };
 
-// ==== Helper functions ====
-function getSpeedStage(speed) {
-  if (speed < 1) return 1;
-  if (speed < 2) return 2;
-  if (speed < 3) return 3;
-  if (speed < 4) return 4;
+// ─── SPEED / STAGE ─────────────────────────────────────
+function getSpeedStage(s) {
+  if (s < 1) return 1;
+  if (s < 2) return 2;
+  if (s < 3) return 3;
+  if (s < 4) return 4;
   return 5;
 }
 
@@ -100,42 +97,45 @@ function updateSpeed() {
 
   document.getElementById("speedIndicator").innerText =
     `Typing Stage: ${stage}`;
-  
-  // Background darkens with speed
-  const bgDarkness = Math.min(typingSpeed / 5, 1);
-  document.body.style.backgroundColor = `rgb(${232 - 180 * bgDarkness}, ${244 - 180 * bgDarkness}, ${248 - 180 * bgDarkness})`;
+
+  const bgDark = Math.min(typingSpeed / 5, 1);
+  document.body.style.backgroundColor = `rgb(${232 - 180 * bgDark}, ${
+    244 - 180 * bgDark
+  }, ${248 - 180 * bgDark})`;
 }
 
+// ─── TREE GROWTH ───────────────────────────────────────
 function random(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-// ==== Tree + Flowers ====
 function addBranch(parent) {
-  const angleVariation = random(-Math.PI / 6, Math.PI / 6);
-  const length = random(30, 60) * (1 + stage * 0.2);
-  const thickness = 1.2 + stage * 0.8;
-  const darkness = Math.min(0.2 + stage * 0.16, 1);
-  const color = `rgb(${150 - 80 * darkness}, ${110 - 80 * darkness}, ${60 - 60 * darkness})`;
+  const angleVar = random(-Math.PI / 6, Math.PI / 6);
+  const len = random(30, 60) * (1 + stage * 0.2);
+  const thick = 1.2 + stage * 0.8;
+  const dark = Math.min(0.2 + stage * 0.18, 1);
+  const color = `rgb(${180 - 140 * dark}, ${130 - 90 * dark}, ${
+    60 - 60 * dark
+  })`;
 
-  const newX = parent.x2 + Math.cos(parent.angle + angleVariation) * length;
-  const newY = parent.y2 + Math.sin(parent.angle + angleVariation) * length;
+  const newX = parent.x2 + Math.cos(parent.angle + angleVar) * len;
+  const newY = parent.y2 + Math.sin(parent.angle + angleVar) * len;
 
-  const branch = {
+  const b = {
     x1: parent.x2,
     y1: parent.y2,
     x2: newX,
     y2: newY,
-    angle: parent.angle + angleVariation,
+    angle: parent.angle + angleVar,
     color,
-    thickness
+    thickness: thick,
   };
-  branches.push(branch);
-  return branch;
+  branches.push(b);
+  return b;
 }
 
 function drawBranches() {
-  branches.forEach(b => {
+  branches.forEach((b) => {
     ctx.strokeStyle = b.color;
     ctx.lineWidth = b.thickness;
     ctx.lineCap = "butt";
@@ -146,40 +146,58 @@ function drawBranches() {
   });
 }
 
+// ─── FLOWERS (FLOATING) ─────────────────────────────────
 function addFlower(branch, letter) {
-  const baseColor = vowelColors[letter.toLowerCase()] || '#fce4ec';
-  const petalCount = 5;
-  const petalLength = 8 + stage * 4;
+  const baseColor = vowelColors[letter.toLowerCase()] || "#fce4ec";
+  const petals = 5;
+  const len = 8 + stage * 5;
   const opacity = [0.3, 0.45, 0.65, 0.85, 1][stage - 1];
 
-  // Choose a position between start and end of branch
   const t = random(0.3, 0.7);
   const x = branch.x1 + (branch.x2 - branch.x1) * t;
   const y = branch.y1 + (branch.y2 - branch.y1) * t;
 
   flowers.push({
-    x, y, baseColor, petalCount, petalLength, opacity
+    x,
+    y,
+    vx: random(-0.2, 0.4),
+    vy: random(-0.6, -0.1),
+    baseColor,
+    petals,
+    len,
+    opacity,
+    angle: random(0, Math.PI * 2),
+    rotationSpeed: random(-0.01, 0.01),
   });
 }
 
 function drawFlowers() {
-  flowers.forEach(f => {
+  flowers.forEach((f) => {
+    // motion
+    f.x += f.vx;
+    f.y += f.vy;
+    f.angle += f.rotationSpeed * (stage >= 4 ? 3 : 1);
+
     ctx.save();
     ctx.translate(f.x, f.y);
-    for (let i = 0; i < f.petalCount; i++) {
-      ctx.rotate((2 * Math.PI) / f.petalCount);
+    ctx.rotate(f.angle);
+
+    for (let i = 0; i < f.petals; i++) {
+      ctx.rotate((2 * Math.PI) / f.petals);
       ctx.beginPath();
       ctx.fillStyle = f.baseColor;
       ctx.globalAlpha = f.opacity;
 
       if (stage <= 2) {
-        ctx.ellipse(0, 10, 5 + stage*2, 5 + stage*2, 0, 0, 2*Math.PI);
+        ctx.ellipse(0, 10, 5 + stage * 2, 5 + stage * 2, 0, 0, 2 * Math.PI);
       } else if (stage === 3 || stage === 4) {
-        ctx.ellipse(0, 10, 6 + stage*3, 10 + stage*4, 0, 0, 2*Math.PI);
+        ctx.ellipse(0, 10, 6 + stage * 3, 10 + stage * 5, 0, 0, 2 * Math.PI);
       } else {
+        // stage 5: spiky, dangerous
         ctx.moveTo(0, 0);
-        ctx.lineTo(6, 10 + stage*4);
-        ctx.lineTo(-6, 10 + stage*4);
+        ctx.lineTo(4, 15 + stage * 5);
+        ctx.lineTo(0, 20 + stage * 7);
+        ctx.lineTo(-4, 15 + stage * 5);
         ctx.closePath();
       }
       ctx.fill();
@@ -187,9 +205,12 @@ function drawFlowers() {
     ctx.restore();
     ctx.globalAlpha = 1;
   });
+
+  // remove floating flowers that leave screen
+  flowers = flowers.filter((f) => f.y > -50 && f.x < width + 50);
 }
 
-// ==== Animation + Typing ====
+// ─── DRAW LOOP ──────────────────────────────────────────
 function draw() {
   ctx.clearRect(0, 0, width, height);
   drawBranches();
@@ -198,44 +219,44 @@ function draw() {
 }
 draw();
 
-// Initialize base trunk on the left
-const baseBranch = {
+// ─── BASE TRUNK ─────────────────────────────────────────
+const base = {
   x1: 50,
   y1: height / 2,
   x2: 100,
   y2: height / 2,
   angle: 0,
   color: "#c19a6b",
-  thickness: 2
+  thickness: 2,
 };
-branches.push(baseBranch);
+branches.push(base);
 
-document.addEventListener("keydown", e => {
+// ─── KEY EVENTS ─────────────────────────────────────────
+document.addEventListener("keydown", (e) => {
   if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
     updateSpeed();
 
     if ("aeiou".includes(e.key.toLowerCase())) {
-      // Add flower to a random existing branch
       const branch = branches[Math.floor(random(0, branches.length))];
       addFlower(branch, e.key);
     } else {
-      // Add new branch connected from an existing one
       const parent = branches[Math.floor(random(0, branches.length))];
       addBranch(parent);
     }
   }
 });
 
+// ─── CLEAR BUTTON ───────────────────────────────────────
 document.getElementById("clearBtn").addEventListener("click", () => {
-  const fallInterval = setInterval(() => {
-    branches.forEach(b => {
+  const fall = setInterval(() => {
+    branches.forEach((b) => {
       b.y1 += 15;
       b.y2 += 15;
     });
-    flowers.forEach(f => f.y += 15);
+    flowers.forEach((f) => (f.y += 15));
     if (branches[0].y1 > height + 100) {
-      clearInterval(fallInterval);
-      branches = [baseBranch];
+      clearInterval(fall);
+      branches = [base];
       flowers = [];
     }
   }, 30);
