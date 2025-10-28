@@ -22,8 +22,8 @@
 
   #speedIndicator {
     text-align: center;
-    font-size: 1.2em;
-    color: #666;
+    font-size: 1.1em;
+    color: #555;
     transition: color 0.5s;
   }
 
@@ -67,6 +67,7 @@ window.addEventListener("resize", () => {
   height = canvas.height = window.innerHeight;
 });
 
+// ==== State ====
 let branches = [];
 let flowers = [];
 let lastKeyTime = Date.now();
@@ -81,6 +82,7 @@ const vowelColors = {
   'u': '#d1b5f7'
 };
 
+// ==== Helper functions ====
 function getSpeedStage(speed) {
   if (speed < 1) return 1;
   if (speed < 2) return 2;
@@ -101,47 +103,60 @@ function updateSpeed() {
   
   // Background darkens with speed
   const bgDarkness = Math.min(typingSpeed / 5, 1);
-  document.body.style.backgroundColor = `rgba(${232 - 200 * bgDarkness}, ${244 - 200 * bgDarkness}, ${248 - 200 * bgDarkness}, 1)`;
+  document.body.style.backgroundColor = `rgb(${232 - 180 * bgDarkness}, ${244 - 180 * bgDarkness}, ${248 - 180 * bgDarkness})`;
 }
 
 function random(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-function addBranch(x, y) {
-  const thickness = 1 + stage * 1.5;
-  const colorValue = Math.floor(139 - (stage * 25));
-  branches.push({
-    x, y,
-    length: random(20, 100),
-    angle: random(-Math.PI/4, Math.PI/4),
-    color: `rgb(${colorValue}, ${100 + stage*10}, 50)`,
+// ==== Tree + Flowers ====
+function addBranch(parent) {
+  const angleVariation = random(-Math.PI / 6, Math.PI / 6);
+  const length = random(30, 60) * (1 + stage * 0.2);
+  const thickness = 1.2 + stage * 0.8;
+  const darkness = Math.min(0.2 + stage * 0.16, 1);
+  const color = `rgb(${150 - 80 * darkness}, ${110 - 80 * darkness}, ${60 - 60 * darkness})`;
+
+  const newX = parent.x2 + Math.cos(parent.angle + angleVariation) * length;
+  const newY = parent.y2 + Math.sin(parent.angle + angleVariation) * length;
+
+  const branch = {
+    x1: parent.x2,
+    y1: parent.y2,
+    x2: newX,
+    y2: newY,
+    angle: parent.angle + angleVariation,
+    color,
     thickness
-  });
+  };
+  branches.push(branch);
+  return branch;
 }
 
 function drawBranches() {
   branches.forEach(b => {
-    ctx.save();
-    ctx.translate(b.x, b.y);
-    ctx.rotate(b.angle);
     ctx.strokeStyle = b.color;
     ctx.lineWidth = b.thickness;
     ctx.lineCap = "butt";
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, -b.length);
+    ctx.moveTo(b.x1, b.y1);
+    ctx.lineTo(b.x2, b.y2);
     ctx.stroke();
-    ctx.restore();
   });
 }
 
-function addFlower(x, y, letter) {
+function addFlower(branch, letter) {
   const baseColor = vowelColors[letter.toLowerCase()] || '#fce4ec';
   const petalCount = 5;
-  const petalLength = 10 + stage * 6;
+  const petalLength = 8 + stage * 4;
   const opacity = [0.3, 0.45, 0.65, 0.85, 1][stage - 1];
-  
+
+  // Choose a position between start and end of branch
+  const t = random(0.3, 0.7);
+  const x = branch.x1 + (branch.x2 - branch.x1) * t;
+  const y = branch.y1 + (branch.y2 - branch.y1) * t;
+
   flowers.push({
     x, y, baseColor, petalCount, petalLength, opacity
   });
@@ -156,7 +171,7 @@ function drawFlowers() {
       ctx.beginPath();
       ctx.fillStyle = f.baseColor;
       ctx.globalAlpha = f.opacity;
-      
+
       if (stage <= 2) {
         ctx.ellipse(0, 10, 5 + stage*2, 5 + stage*2, 0, 0, 2*Math.PI);
       } else if (stage === 3 || stage === 4) {
@@ -174,6 +189,7 @@ function drawFlowers() {
   });
 }
 
+// ==== Animation + Typing ====
 function draw() {
   ctx.clearRect(0, 0, width, height);
   drawBranches();
@@ -182,28 +198,44 @@ function draw() {
 }
 draw();
 
+// Initialize base trunk on the left
+const baseBranch = {
+  x1: 50,
+  y1: height / 2,
+  x2: 100,
+  y2: height / 2,
+  angle: 0,
+  color: "#c19a6b",
+  thickness: 2
+};
+branches.push(baseBranch);
+
 document.addEventListener("keydown", e => {
   if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
     updateSpeed();
-    const x = random(50, width - 50);
-    const y = random(height/2, height - 50);
-    
+
     if ("aeiou".includes(e.key.toLowerCase())) {
-      addFlower(x, y, e.key);
+      // Add flower to a random existing branch
+      const branch = branches[Math.floor(random(0, branches.length))];
+      addFlower(branch, e.key);
     } else {
-      addBranch(x, y);
+      // Add new branch connected from an existing one
+      const parent = branches[Math.floor(random(0, branches.length))];
+      addBranch(parent);
     }
   }
 });
 
 document.getElementById("clearBtn").addEventListener("click", () => {
-  // "Fall down" animation
   const fallInterval = setInterval(() => {
-    branches.forEach(b => b.y += 15);
+    branches.forEach(b => {
+      b.y1 += 15;
+      b.y2 += 15;
+    });
     flowers.forEach(f => f.y += 15);
-    if (branches.length && branches[0].y > height + 100) {
+    if (branches[0].y1 > height + 100) {
       clearInterval(fallInterval);
-      branches = [];
+      branches = [baseBranch];
       flowers = [];
     }
   }, 30);
