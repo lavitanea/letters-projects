@@ -3,605 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physical + Emotional Typing Art</title>
+    <title>Visualising Words</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
+            font-family: 'Georgia', serif;
+            background: #fafaf8;
             overflow: hidden;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
-            font-family: 'Arial', sans-serif;
-        }
-        
-        #canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
             height: 100vh;
         }
-        
-        .shape {
-            position: absolute;
-            pointer-events: none;
-            transition: all 0.3s ease-out;
-        }
-        
-        /* Liquid vowels - flowing and pooling */
-        .liquid {
-            mix-blend-mode: screen;
-            animation: liquidFlow 4s ease-in-out infinite;
-            filter: blur(3px);
-        }
-        
-        @keyframes liquidFlow {
-            0%, 100% {
-                border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%;
-            }
-            33% {
-                border-radius: 40% 60% 50% 50% / 60% 40% 60% 40%;
-            }
-            66% {
-                border-radius: 55% 45% 35% 65% / 45% 55% 45% 55%;
-            }
-        }
-        
-        /* Solid consonants - structured and resistant */
-        .solid {
-            mix-blend-mode: lighten;
-            animation: solidPulse 3s ease-in-out infinite;
-        }
-        
-        @keyframes solidPulse {
-            0%, 100% {
-                transform: translate(var(--tx), var(--ty)) scale(1);
-            }
-            50% {
-                transform: translate(var(--tx), var(--ty)) scale(1.05);
-            }
-        }
-        
-        /* Triangle shapes - sharp and angular */
-        .triangle {
-            animation: triangleRotate 6s linear infinite;
-        }
-        
-        @keyframes triangleRotate {
-            0% {
-                transform: translate(var(--tx), var(--ty)) rotate(0deg);
-            }
-            100% {
-                transform: translate(var(--tx), var(--ty)) rotate(360deg);
-            }
-        }
-        
-        /* Round/Spiral shapes */
-        .round {
-            mix-blend-mode: screen;
-            animation: roundPulse 4s ease-in-out infinite;
-        }
-        
-        @keyframes roundPulse {
-            0%, 100% {
-                transform: translate(var(--tx), var(--ty)) scale(1) rotate(0deg);
-                opacity: 0.9;
-            }
-            50% {
-                transform: translate(var(--tx), var(--ty)) scale(1.15) rotate(180deg);
-                opacity: 1;
-            }
-        }
-        
-        /* Line shapes - borders between others */
-        .line-shape {
-            mix-blend-mode: normal;
-            animation: lineFloat 5s ease-in-out infinite;
-            z-index: 10;
-        }
-        
-        @keyframes lineFloat {
-            0%, 100% {
-                transform: translate(var(--tx), var(--ty)) translateY(0);
-            }
-            50% {
-                transform: translate(var(--tx), var(--ty)) translateY(-20px);
-            }
-        }
-        
-        /* Wave shapes - water-like */
-        .wave {
-            mix-blend-mode: screen;
-            animation: waveFlow 5s ease-in-out infinite;
-            filter: blur(2px);
-        }
-        
-        @keyframes waveFlow {
-            0%, 100% {
-                border-radius: 45% 55% 50% 50% / 75% 75% 25% 25%;
-                transform: translate(var(--tx), var(--ty)) rotate(0deg);
-            }
-            33% {
-                border-radius: 55% 45% 60% 40% / 65% 80% 20% 35%;
-                transform: translate(var(--tx), var(--ty)) rotate(10deg);
-            }
-            66% {
-                border-radius: 40% 60% 45% 55% / 70% 65% 35% 30%;
-                transform: translate(var(--tx), var(--ty)) rotate(-10deg);
-            }
-        }
-        
-        /* Air/Space effect */
-        .air {
-            mix-blend-mode: soft-light;
-            animation: airPush 3s ease-out;
-            filter: blur(15px);
-            opacity: 0.4;
-        }
-        
-        @keyframes airPush {
-            0% {
-                transform: translate(-50%, -50%) scale(0);
-                opacity: 0.6;
-            }
-            100% {
-                transform: translate(-50%, -50%) scale(3);
-                opacity: 0;
-            }
-        }
-        
-        /* Gravity well for punctuation */
-        .gravity {
-            mix-blend-mode: overlay;
-            animation: gravityPull 8s ease-in-out infinite;
-            filter: blur(8px);
-            z-index: 5;
-        }
-        
-        @keyframes gravityPull {
-            0%, 100% {
-                transform: translate(-50%, -50%) scale(1) rotate(0deg);
-            }
-            50% {
-                transform: translate(-50%, -50%) scale(1.3) rotate(360deg);
-            }
-        }
-        
-        /* Calm mood - slow typing */
-        .calm {
-            animation-duration: 8s !important;
-            filter: blur(4px);
-        }
-        
-        /* Aggressive mood - fast typing */
-        .aggressive {
-            animation-duration: 1.5s !important;
-            filter: blur(0px) drop-shadow(0 0 10px currentColor);
-        }
-        
-        .info {
+
+        #title {
             position: fixed;
-            bottom: 30px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 12px;
-            text-align: center;
-            pointer-events: none;
+            font-size: 32px;
+            color: #8b7355;
+            letter-spacing: 3px;
             z-index: 1000;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            text-transform: lowercase;
+            font-weight: 300;
         }
-        
-        .mood-indicator {
+
+        #clear-btn {
             position: fixed;
-            top: 30px;
-            left: 30px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            z-index: 1000;
-            letter-spacing: 1px;
-            padding: 15px 25px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .clear-btn {
-            position: fixed;
-            top: 30px;
+            bottom: 30px;
             right: 30px;
-            padding: 12px 24px;
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.7);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 12px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            z-index: 1000;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        
-        .clear-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.4);
+            padding: 12px 28px;
+            background: #d4a5a5;
+            border: none;
+            border-radius: 25px;
             color: white;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+            text-transform: lowercase;
+        }
+
+        #clear-btn:hover {
+            background: #c49090;
             transform: scale(1.05);
         }
-        
-        .fade-out {
-            animation: fadeOut 2s ease-out forwards;
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
-        
-        @keyframes fadeOut {
+
+        .branch {
+            position: absolute;
+            transform-origin: bottom center;
+            transition: opacity 0.8s;
+        }
+
+        .flower {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            transform-origin: center;
+            transition: opacity 0.8s;
+        }
+
+        .falling {
+            animation: fall 2s forwards;
+        }
+
+        @keyframes fall {
             to {
+                transform: translateY(100vh) rotate(360deg);
                 opacity: 0;
-                transform: translate(var(--tx), var(--ty)) scale(0.5);
             }
         }
     </style>
 </head>
 <body>
-    <div id="canvas"></div>
-    <button class="clear-btn" onclick="clearCanvas()">Clear</button>
-    <div class="mood-indicator">
-        <div>Mood: <span id="mood-text">Neutral</span></div>
-        <div style="font-size: 11px; margin-top: 5px; opacity: 0.7;">Speed: <span id="speed-text">0</span> cps</div>
-    </div>
-    <div class="info">Type to create • Space for air • Punctuation for gravity</div>
-    
+    <div id="title">visualising words</div>
+    <svg id="canvas"></svg>
+    <button id="clear-btn">clear</button>
+
     <script>
         const canvas = document.getElementById('canvas');
-        const shapes = [];
-        const gravityWells = [];
+        const clearBtn = document.getElementById('clear-btn');
         
-        // Typing analysis
-        let typingTimes = [];
-        let lastKeyTime = 0;
-        let currentMood = 'neutral';
-        let typingSpeed = 0;
+        const vowels = ['a', 'e', 'i', 'o', 'u', 'y'];
+        const consonants = 'bcdfghjklmnpqrstvwxz'.split('');
         
-        // Color palettes based on mood
-        const colors = {
-            aggressive: {
-                // Neon bright colors for fast typing
-                triangle: ['#FF0080', '#00FFFF', '#FF00FF', '#FFFF00', '#00FF00'],
-                round: ['#FF1493', '#00CED1', '#FF69B4', '#00FFFF'],
-                line: ['#FFFFFF', '#FFFF00', '#00FFFF'],
-                wave: ['#00FF7F', '#FF00FF', '#00BFFF', '#FF1493'],
-                liquid: ['#FF0066', '#00FFAA', '#FF00DD', '#00FFFF']
-            },
-            calm: {
-                // Pastel light colors for slow typing
-                triangle: ['#FFB6C1', '#B0E0E6', '#DDA0DD', '#F0E68C', '#98FB98'],
-                round: ['#FFE4E1', '#E0FFFF', '#F5DEB3', '#FFF0F5'],
-                line: ['#F0F8FF', '#FFFACD', '#F0FFF0'],
-                wave: ['#B0E0E6', '#DDA0DD', '#FFE4B5', '#E6E6FA'],
-                liquid: ['#FFE4E1', '#B0E0E6', '#DDA0DD', '#E0FFFF']
-            },
-            neutral: {
-                // Medium brightness for neutral
-                triangle: ['#FF69B4', '#4169E1', '#9370DB', '#FFD700'],
-                round: ['#FF1493', '#00CED1', '#9370DB', '#FF69B4'],
-                line: ['#FFFFFF', '#FFD700', '#00CED1'],
-                wave: ['#20B2AA', '#9370DB', '#4169E1', '#FF69B4'],
-                liquid: ['#FF1493', '#20B2AA', '#9370DB', '#00CED1']
-            }
+        // Flower colors for each vowel
+        const vowelColors = {
+            'a': { main: '#ffb3ba', dark: '#ff8fa3' },
+            'e': { main: '#ffc9de', dark: '#ffadd2' },
+            'i': { main: '#bae1ff', dark: '#95d5ff' },
+            'o': { main: '#e0b3ff', dark: '#d199ff' },
+            'u': { main: '#c9b3ff', dark: '#b399ff' },
+            'y': { main: '#d4c5f9', dark: '#c0aef5' }
         };
+
+        // Assign each consonant a unique color
+        const consonantColors = {};
+        const pastelleColors = [
+            '#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff',
+            '#e0b3ff', '#ffc9de', '#ffd4ba', '#baf3ba', '#d4baff',
+            '#ffbacc', '#baffba', '#babfff', '#ffbae6', '#baffe6',
+            '#f0baff', '#ffccba', '#e6ffba', '#bae6ff', '#ffbad4'
+        ];
         
-        // Letter categories
-        const letterTypes = {
-            triangle: 'radvRADV',
-            round: 'qbcogpQBCOGP',
-            line: 'tifkehxyTIFKEHXY',
-            wave: 'wjumnsζWJUMNSZ',
-            liquid: 'aeiouAEIOU' // Vowels as liquid
-        };
-        
-        function analyzeMood() {
-            const now = Date.now();
-            if (typingTimes.length > 1) {
-                const recentTimes = typingTimes.slice(-10);
-                const intervals = [];
-                for (let i = 1; i < recentTimes.length; i++) {
-                    intervals.push(recentTimes[i] - recentTimes[i-1]);
-                }
-                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-                typingSpeed = Math.round(1000 / avgInterval * 10) / 10;
-                
-                // Fast typing (< 150ms between keys) = aggressive
-                // Slow typing (> 400ms between keys) = calm
-                if (avgInterval < 150) {
-                    currentMood = 'aggressive';
-                } else if (avgInterval > 400) {
-                    currentMood = 'calm';
-                } else {
-                    currentMood = 'neutral';
-                }
-            }
-            
-            document.getElementById('mood-text').textContent = currentMood.charAt(0).toUpperCase() + currentMood.slice(1);
-            document.getElementById('speed-text').textContent = typingSpeed;
-        }
-        
-        function getLetterType(letter) {
-            for (let type in letterTypes) {
-                if (letterTypes[type].includes(letter)) {
-                    return type;
-                }
-            }
-            return 'round'; // default
-        }
-        
-        function getRandomColor(type) {
-            const palette = colors[currentMood][type] || colors[currentMood].round;
-            return palette[Math.floor(Math.random() * palette.length)];
-        }
-        
-        function createTriangle(x, y, size, color) {
-            const shape = document.createElement('div');
-            shape.className = 'shape triangle solid ' + currentMood;
-            shape.style.width = size + 'px';
-            shape.style.height = size + 'px';
-            shape.style.left = x + 'px';
-            shape.style.top = y + 'px';
-            shape.style.setProperty('--tx', '-50%');
-            shape.style.setProperty('--ty', '-50%');
-            
-            // Create rounded triangle using clip-path
-            shape.style.background = `radial-gradient(circle at 50% 40%, ${color}, ${color}CC)`;
-            shape.style.clipPath = 'polygon(50% 0%, 100% 100%, 0% 100%)';
-            shape.style.filter = `drop-shadow(0 0 ${currentMood === 'aggressive' ? '20px' : '10px'} ${color}88)`;
-            shape.style.borderRadius = '15%';
-            
-            return shape;
-        }
-        
-        function createRound(x, y, size, color) {
-            const shape = document.createElement('div');
-            shape.className = 'shape round ' + currentMood;
-            shape.style.width = size + 'px';
-            shape.style.height = size + 'px';
-            shape.style.left = x + 'px';
-            shape.style.top = y + 'px';
-            shape.style.setProperty('--tx', '-50%');
-            shape.style.setProperty('--ty', '-50%');
-            shape.style.background = `radial-gradient(circle, ${color}, ${color}AA 60%, transparent)`;
-            shape.style.borderRadius = '50%';
-            shape.style.filter = `blur(${currentMood === 'calm' ? '5px' : '2px'})`;
-            
-            return shape;
-        }
-        
-        function createLine(x, y, length, color, isVertical) {
-            const shape = document.createElement('div');
-            shape.className = 'shape line-shape ' + currentMood;
-            
-            if (isVertical) {
-                shape.style.width = '4px';
-                shape.style.height = length + 'px';
-            } else {
-                shape.style.width = length + 'px';
-                shape.style.height = '4px';
-            }
-            
-            shape.style.left = x + 'px';
-            shape.style.top = y + 'px';
-            shape.style.setProperty('--tx', '-50%');
-            shape.style.setProperty('--ty', '-50%');
-            shape.style.background = `linear-gradient(${isVertical ? '180deg' : '90deg'}, transparent, ${color}, transparent)`;
-            shape.style.boxShadow = `0 0 ${currentMood === 'aggressive' ? '15px' : '8px'} ${color}`;
-            
-            return shape;
-        }
-        
-        function createWave(x, y, size, color) {
-            const shape = document.createElement('div');
-            shape.className = 'shape wave ' + currentMood;
-            shape.style.width = (size * 1.5) + 'px';
-            shape.style.height = size + 'px';
-            shape.style.left = x + 'px';
-            shape.style.top = y + 'px';
-            shape.style.setProperty('--tx', '-50%');
-            shape.style.setProperty('--ty', '-50%');
-            shape.style.background = `radial-gradient(ellipse, ${color}, ${color}99 50%, transparent)`;
-            shape.style.filter = `blur(${currentMood === 'calm' ? '6px' : '3px'})`;
-            
-            return shape;
-        }
-        
-        function createLiquid(x, y, size, color) {
-            const shape = document.createElement('div');
-            shape.className = 'shape liquid ' + currentMood;
-            shape.style.width = size + 'px';
-            shape.style.height = size + 'px';
-            shape.style.left = x + 'px';
-            shape.style.top = y + 'px';
-            shape.style.setProperty('--tx', '-50%');
-            shape.style.setProperty('--ty', '-50%');
-            shape.style.background = `radial-gradient(circle, ${color}, ${color}CC 40%, ${color}66 70%, transparent)`;
-            
-            // Add gravity effect - liquid flows down
-            setTimeout(() => {
-                shape.style.top = (y + 50 + Math.random() * 100) + 'px';
-            }, 100);
-            
-            return shape;
-        }
-        
-        function createAir(x, y) {
-            const shape = document.createElement('div');
-            shape.className = 'shape air';
-            shape.style.width = '200px';
-            shape.style.height = '200px';
-            shape.style.left = x + 'px';
-            shape.style.top = y + 'px';
-            shape.style.background = 'radial-gradient(circle, rgba(255,255,255,0.3), transparent)';
-            shape.style.borderRadius = '50%';
-            
-            // Push nearby shapes
-            shapes.forEach(s => {
-                if (s && s.parentElement) {
-                    const sx = parseFloat(s.style.left);
-                    const sy = parseFloat(s.style.top);
-                    const dx = sx - x;
-                    const dy = sy - y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    
-                    if (dist < 300) {
-                        const push = 50 * (1 - dist/300);
-                        s.style.left = (sx + dx * push/dist) + 'px';
-                        s.style.top = (sy + dy * push/dist) + 'px';
-                    }
-                }
-            });
-            
-            setTimeout(() => shape.remove(), 3000);
-            return shape;
-        }
-        
-        function createGravityWell(x, y, char) {
-            const shape = document.createElement('div');
-            shape.className = 'shape gravity';
-            const size = 300;
-            shape.style.width = size + 'px';
-            shape.style.height = size + 'px';
-            shape.style.left = x + 'px';
-            shape.style.top = y + 'px';
-            
-            // Dark gravity well
-            shape.style.background = 'radial-gradient(circle, rgba(0,0,0,0.6), rgba(100,50,150,0.3) 40%, transparent)';
-            shape.style.borderRadius = '50%';
-            
-            // Store well data
-            gravityWells.push({ element: shape, x, y, strength: 100 });
-            
-            // Attract nearby shapes
-            const attractInterval = setInterval(() => {
-                shapes.forEach(s => {
-                    if (s && s.parentElement && !s.classList.contains('gravity')) {
-                        const sx = parseFloat(s.style.left);
-                        const sy = parseFloat(s.style.top);
-                        const dx = x - sx;
-                        const dy = y - sy;
-                        const dist = Math.sqrt(dx*dx + dy*dy);
-                        
-                        if (dist < 400 && dist > 10) {
-                            const pull = 0.5;
-                            s.style.left = (sx + dx * pull/dist) + 'px';
-                            s.style.top = (sy + dy * pull/dist) + 'px';
-                        }
-                    }
-                });
-            }, 50);
-            
-            setTimeout(() => {
-                clearInterval(attractInterval);
-                shape.classList.add('fade-out');
-                setTimeout(() => {
-                    shape.remove();
-                    const idx = gravityWells.findIndex(w => w.element === shape);
-                    if (idx > -1) gravityWells.splice(idx, 1);
-                }, 2000);
-            }, 10000);
-            
-            return shape;
-        }
-        
-        function createShape(char) {
-            const now = Date.now();
-            typingTimes.push(now);
-            if (typingTimes.length > 15) typingTimes.shift();
-            analyzeMood();
-            
-            const x = Math.random() * window.innerWidth;
-            const y = Math.random() * window.innerHeight;
-            
-            let shape;
-            const baseSize = currentMood === 'aggressive' ? 150 : currentMood === 'calm' ? 250 : 200;
-            
-            // Handle space as air
-            if (char === ' ') {
-                shape = createAir(x, y);
-                canvas.appendChild(shape);
-                return;
-            }
-            
-            // Handle punctuation as gravity wells
-            if ('.,!?;:'.includes(char)) {
-                shape = createGravityWell(x, y, char);
-                canvas.appendChild(shape);
-                return;
-            }
-            
-            const type = getLetterType(char);
-            const color = getRandomColor(type);
-            
-            switch(type) {
-                case 'triangle':
-                    shape = createTriangle(x, y, baseSize * 0.8, color);
-                    break;
-                case 'round':
-                    shape = createRound(x, y, baseSize, color);
-                    break;
-                case 'line':
-                    shape = createLine(x, y, baseSize * 1.2, color, Math.random() > 0.5);
-                    break;
-                case 'wave':
-                    shape = createWave(x, y, baseSize * 0.7, color);
-                    break;
-                case 'liquid':
-                    shape = createLiquid(x, y, baseSize * 0.9, color);
-                    break;
-                default:
-                    shape = createRound(x, y, baseSize, color);
-            }
-            
-            canvas.appendChild(shape);
-            shapes.push(shape);
-            
-            // Limit shapes on canvas
-            if (shapes.length > 60) {
-                const oldShape = shapes.shift();
-                if (oldShape && oldShape.parentElement) {
-                    oldShape.classList.add('fade-out');
-                    setTimeout(() => oldShape.remove(), 2000);
-                }
-            }
-        }
-        
-        document.addEventListener('keypress', (e) => {
-            if (e.key) {
-                createShape(e.key);
-            }
+        consonants.forEach((c, i) => {
+            consonantColors[c] = pastelleColors[i % pastelleColors.length];
         });
-        
-        function clearCanvas() {
-            shapes.forEach(shape => {
-                if (shape && shape.parentElement) {
-                    shape.classList.add('fade-out');
-                    setTimeout(() => shape.remove(), 500);
-                }
-            });
-            gravityWells.forEach(well => {
-                if (well.element && well.element.parentElement) {
-                    well.element.classList.add('fade-out');
-                    setTimeout(() => well.element.remove(), 500);
-                }
-            });
-            shapes.length = 0;
-            gravityWells.length = 0;
-            typingTimes = [];
-            currentMood = 'neutral';
-            typingSpeed = 0;
+
+        let branches = [];
+        let flowers = [];
+        let lastTypeTime = Date.now();
+        let typeSpeed = 0;
+        let currentCorner = 0; // 0: top-left, 1: top-right, 2: bottom-right, 3: bottom-left
+        let cornerPositions = [];
+        let branchCount = 0;
+
+        function getCornerPosition() {
+            const corners = [
+                { x: 50, y: 100 },
+                { x: window.innerWidth - 50, y: 100 },
+                { x: window.innerWidth - 50, y: window.innerHeight - 50 },
+                { x: 50, y: window.innerHeight - 50 }
+            ];
+            
+            const position = corners[currentCorner];
+            currentCorner = (currentCorner + 1) % 4;
+            return position;
         }
+
+        function getProgressPosition(startX, startY, progress) {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            
+            return {
+                x: startX + (centerX - startX) * progress,
+                y: startY + (centerY - startY) * progress
+            };
+        }
+
+        function calculateTypeSpeed() {
+            const now = Date.now();
+            const timeDiff = now - lastTypeTime;
+            typeSpeed = Math.max(0, Math.min(1, 1 - (timeDiff / 1000)));
+            lastTypeTime = now;
+        }
+
+        function createBranch(x, y, angle, length, color) {
+            const endX = x + Math.cos(angle) * length;
+            const endY = y + Math.sin(angle) * length;
+            
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const controlX = x + Math.cos(angle + 0.3) * length * 0.7;
+            const controlY = y + Math.sin(angle + 0.3) * length * 0.7;
+            
+            path.setAttribute('d', `M ${x} ${y} Q ${controlX} ${controlY} ${endX} ${endY}`);
+            path.setAttribute('stroke', color);
+            path.setAttribute('stroke-width', Math.max(1, 4 - typeSpeed * 2));
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke-linecap', 'round');
+            
+            canvas.appendChild(path);
+            branches.push({ element: path, endX, endY, angle });
+            
+            return { x: endX, y: endY };
+        }
+
+        function createFlower(x, y, vowel, speed) {
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.setAttribute('class', 'flower');
+            
+            const colors = vowelColors[vowel];
+            const petalCount = 5 + Math.floor(Math.random() * 3);
+            const size = 15 + speed * 15;
+            const sharpness = speed * 0.5;
+            
+            for (let i = 0; i < petalCount; i++) {
+                const angle = (i * 360 / petalCount) * Math.PI / 180;
+                const petal = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                
+                const rx = size * (0.4 + sharpness * 0.3);
+                const ry = size * (1 - sharpness * 0.4);
+                
+                petal.setAttribute('cx', x + Math.cos(angle) * size * 0.3);
+                petal.setAttribute('cy', y + Math.sin(angle) * size * 0.3);
+                petal.setAttribute('rx', rx);
+                petal.setAttribute('ry', ry);
+                petal.setAttribute('fill', speed > 0.5 ? colors.dark : colors.main);
+                petal.setAttribute('opacity', 0.7 + speed * 0.3);
+                petal.setAttribute('transform', `rotate(${i * 360 / petalCount} ${x} ${y})`);
+                
+                group.appendChild(petal);
+            }
+            
+            // Center
+            const center = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            center.setAttribute('cx', x);
+            center.setAttribute('cy', y);
+            center.setAttribute('r', size * 0.25);
+            center.setAttribute('fill', '#ffd966');
+            group.appendChild(center);
+            
+            canvas.appendChild(group);
+            flowers.push(group);
+        }
+
+        function handleKeyPress(e) {
+            const key = e.key.toLowerCase();
+            
+            if (key.length !== 1 || !/[a-z]/.test(key)) return;
+            
+            calculateTypeSpeed();
+            
+            const progress = (branchCount * 0.05) % 1;
+            
+            if (vowels.includes(key)) {
+                // Create flower on last branch or random position
+                let x, y;
+                if (branches.length > 0) {
+                    const lastBranch = branches[branches.length - 1];
+                    x = lastBranch.endX + (Math.random() - 0.5) * 30;
+                    y = lastBranch.endY + (Math.random() - 0.5) * 30;
+                } else {
+                    const corner = getCornerPosition();
+                    const pos = getProgressPosition(corner.x, corner.y, progress);
+                    x = pos.x;
+                    y = pos.y;
+                }
+                
+                createFlower(x, y, key, typeSpeed);
+            } else if (consonants.includes(key)) {
+                // Create branch
+                let startX, startY;
+                
+                if (branches.length === 0 || branchCount % 8 === 0) {
+                    const corner = getCornerPosition();
+                    cornerPositions.push(corner);
+                    startX = corner.x;
+                    startY = corner.y;
+                } else {
+                    const lastBranch = branches[branches.length - 1];
+                    startX = lastBranch.endX;
+                    startY = lastBranch.endY;
+                }
+                
+                const baseAngle = Math.atan2(
+                    window.innerHeight / 2 - startY,
+                    window.innerWidth / 2 - startX
+                );
+                
+                const angle = baseAngle + (Math.random() - 0.5) * Math.PI / 3;
+                const length = 40 + Math.random() * 40 + typeSpeed * 30;
+                
+                // Color based on speed
+                const speedColor = Math.floor(typeSpeed * 155);
+                const r = 139 - speedColor;
+                const g = 115 - speedColor;
+                const b = 85 - speedColor;
+                const color = `rgb(${r}, ${g}, ${b})`;
+                
+                createBranch(startX, startY, angle, length, color);
+                branchCount++;
+            }
+        }
+
+        function clearCanvas() {
+            // Add falling animation
+            branches.forEach(branch => {
+                branch.element.classList.add('falling');
+            });
+            
+            flowers.forEach(flower => {
+                flower.classList.add('falling');
+            });
+            
+            // Clear arrays and remove elements after animation
+            setTimeout(() => {
+                branches.forEach(branch => branch.element.remove());
+                flowers.forEach(flower => flower.remove());
+                branches = [];
+                flowers = [];
+                branchCount = 0;
+                currentCorner = 0;
+                cornerPositions = [];
+            }, 2000);
+        }
+
+        document.addEventListener('keypress', handleKeyPress);
+        clearBtn.addEventListener('click', clearCanvas);
+
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.setAttribute('width', window.innerWidth);
+            canvas.setAttribute('height', window.innerHeight);
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
     </script>
 </body>
 </html>
