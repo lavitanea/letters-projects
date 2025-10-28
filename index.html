@@ -61,22 +61,30 @@
             height: 100%;
         }
 
-        .branch {
-            position: absolute;
-            transform-origin: bottom center;
-            transition: opacity 0.8s;
-        }
-
         .flower {
             position: absolute;
-            width: 40px;
-            height: 40px;
             transform-origin: center;
             transition: opacity 0.8s;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+                transform: translate(3px, -5px) rotate(2deg);
+            }
+            50% {
+                transform: translate(-2px, -8px) rotate(-2deg);
+            }
+            75% {
+                transform: translate(-4px, -3px) rotate(1deg);
+            }
         }
 
         .falling {
-            animation: fall 2s forwards;
+            animation: fall 2s forwards !important;
         }
 
         @keyframes fall {
@@ -109,68 +117,102 @@
             'y': { main: '#d4c5f9', dark: '#c0aef5' }
         };
 
-        // Assign each consonant a unique color
-        const consonantColors = {};
-        const pastelleColors = [
-            '#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff',
-            '#e0b3ff', '#ffc9de', '#ffd4ba', '#baf3ba', '#d4baff',
-            '#ffbacc', '#baffba', '#babfff', '#ffbae6', '#baffe6',
-            '#f0baff', '#ffccba', '#e6ffba', '#bae6ff', '#ffbad4'
-        ];
-        
-        consonants.forEach((c, i) => {
-            consonantColors[c] = pastelleColors[i % pastelleColors.length];
-        });
-
         let branches = [];
         let flowers = [];
         let lastTypeTime = Date.now();
         let typeSpeed = 0;
-        let currentCorner = 0; // 0: top-left, 1: top-right, 2: bottom-right, 3: bottom-left
-        let cornerPositions = [];
-        let branchCount = 0;
-
-        function getCornerPosition() {
-            const corners = [
-                { x: 50, y: 100 },
-                { x: window.innerWidth - 50, y: 100 },
-                { x: window.innerWidth - 50, y: window.innerHeight - 50 },
-                { x: 50, y: window.innerHeight - 50 }
-            ];
-            
-            const position = corners[currentCorner];
-            currentCorner = (currentCorner + 1) % 4;
-            return position;
-        }
-
-        function getProgressPosition(startX, startY, progress) {
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            
-            return {
-                x: startX + (centerX - startX) * progress,
-                y: startY + (centerY - startY) * progress
-            };
-        }
+        let mainBranches = []; // Store the 4 main branches
 
         function calculateTypeSpeed() {
             const now = Date.now();
             const timeDiff = now - lastTypeTime;
-            typeSpeed = Math.max(0, Math.min(1, 1 - (timeDiff / 1000)));
+            typeSpeed = Math.max(0, Math.min(1, 1 - (timeDiff / 800)));
             lastTypeTime = now;
         }
 
-        function createBranch(x, y, angle, length, color) {
-            const endX = x + Math.cos(angle) * length;
-            const endY = y + Math.sin(angle) * length;
+        function initMainBranches() {
+            if (mainBranches.length > 0) return;
+            
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            
+            const corners = [
+                { x: 80, y: 120, angle: Math.atan2(centerY - 120, centerX - 80) },
+                { x: window.innerWidth - 80, y: 120, angle: Math.atan2(centerY - 120, centerX - (window.innerWidth - 80)) },
+                { x: window.innerWidth - 80, y: window.innerHeight - 80, angle: Math.atan2(centerY - (window.innerHeight - 80), centerX - (window.innerWidth - 80)) },
+                { x: 80, y: window.innerHeight - 80, angle: Math.atan2(centerY - (window.innerHeight - 80), centerX - 80) }
+            ];
+            
+            corners.forEach((corner, index) => {
+                const distance = Math.hypot(centerX - corner.x, centerY - corner.y);
+                const length = distance * 0.6;
+                const endX = corner.x + Math.cos(corner.angle) * length;
+                const endY = corner.y + Math.sin(corner.angle) * length;
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const controlX = corner.x + Math.cos(corner.angle) * length * 0.5;
+                const controlY = corner.y + Math.sin(corner.angle) * length * 0.5;
+                
+                path.setAttribute('d', `M ${corner.x} ${corner.y} Q ${controlX} ${controlY} ${endX} ${endY}`);
+                path.setAttribute('stroke', '#8b7355');
+                path.setAttribute('stroke-width', '5');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke-linecap', 'round');
+                
+                canvas.appendChild(path);
+                
+                mainBranches.push({
+                    element: path,
+                    startX: corner.x,
+                    startY: corner.y,
+                    endX: endX,
+                    endY: endY,
+                    angle: corner.angle,
+                    length: length
+                });
+            });
+        }
+
+        function getRandomPointOnMainBranch(branchIndex) {
+            const branch = mainBranches[branchIndex];
+            const t = 0.3 + Math.random() * 0.5; // Random point between 30% and 80% of branch
+            
+            const x = branch.startX + (branch.endX - branch.startX) * t;
+            const y = branch.startY + (branch.endY - branch.startY) * t;
+            
+            return { x, y, angle: branch.angle };
+        }
+
+        function createBranch(startX, startY, baseAngle, speed) {
+            const angleVariation = (Math.random() - 0.5) * Math.PI / 2;
+            const angle = baseAngle + angleVariation;
+            const length = 30 + Math.random() * 30 + speed * 40;
+            
+            const endX = startX + Math.cos(angle) * length;
+            const endY = startY + Math.sin(angle) * length;
             
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            const controlX = x + Math.cos(angle + 0.3) * length * 0.7;
-            const controlY = y + Math.sin(angle + 0.3) * length * 0.7;
             
-            path.setAttribute('d', `M ${x} ${y} Q ${controlX} ${controlY} ${endX} ${endY}`);
+            // Sharp or curved based on speed
+            if (speed > 0.5) {
+                // Sharp, direct line when fast
+                path.setAttribute('d', `M ${startX} ${startY} L ${endX} ${endY}`);
+            } else {
+                // Curved when slow
+                const controlX = startX + Math.cos(angle + 0.2) * length * 0.6;
+                const controlY = startY + Math.sin(angle + 0.2) * length * 0.6;
+                path.setAttribute('d', `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`);
+            }
+            
+            // Color based on speed
+            const speedColor = Math.floor(speed * 155);
+            const r = 139 - speedColor;
+            const g = 115 - speedColor;
+            const b = 85 - speedColor;
+            const color = `rgb(${r}, ${g}, ${b})`;
+            
             path.setAttribute('stroke', color);
-            path.setAttribute('stroke-width', Math.max(1, 4 - typeSpeed * 2));
+            path.setAttribute('stroke-width', Math.max(2, 2 + speed * 3));
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke-linecap', 'round');
             
@@ -183,37 +225,55 @@
         function createFlower(x, y, vowel, speed) {
             const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             group.setAttribute('class', 'flower');
+            group.style.left = x + 'px';
+            group.style.top = y + 'px';
             
             const colors = vowelColors[vowel];
-            const petalCount = 5 + Math.floor(Math.random() * 3);
-            const size = 15 + speed * 15;
-            const sharpness = speed * 0.5;
+            const petalCount = 6;
             
+            // Size and sharpness based on speed
+            const baseSize = 12;
+            const size = baseSize + speed * 25; // Grows much longer when fast
+            const sharpness = speed * 0.8; // More extreme sharpness
+            
+            // Opacity based on speed
+            const opacity = 0.3 + speed * 0.7; // 30% to 100%
+            
+            // Create petals
             for (let i = 0; i < petalCount; i++) {
                 const angle = (i * 360 / petalCount) * Math.PI / 180;
                 const petal = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
                 
-                const rx = size * (0.4 + sharpness * 0.3);
-                const ry = size * (1 - sharpness * 0.4);
+                // Sharp petals: very thin rx, long ry
+                const rx = size * (0.15 + sharpness * 0.05); // Very thin
+                const ry = size * (1.2 + sharpness * 0.8); // Very long
                 
-                petal.setAttribute('cx', x + Math.cos(angle) * size * 0.3);
-                petal.setAttribute('cy', y + Math.sin(angle) * size * 0.3);
+                const petalDistance = size * (0.4 + sharpness * 0.3);
+                
+                petal.setAttribute('cx', x + Math.cos(angle) * petalDistance);
+                petal.setAttribute('cy', y + Math.sin(angle) * petalDistance);
                 petal.setAttribute('rx', rx);
                 petal.setAttribute('ry', ry);
                 petal.setAttribute('fill', speed > 0.5 ? colors.dark : colors.main);
-                petal.setAttribute('opacity', 0.7 + speed * 0.3);
-                petal.setAttribute('transform', `rotate(${i * 360 / petalCount} ${x} ${y})`);
+                petal.setAttribute('opacity', opacity);
+                petal.setAttribute('transform', `rotate(${(i * 360 / petalCount) + 90} ${x + Math.cos(angle) * petalDistance} ${y + Math.sin(angle) * petalDistance})`);
                 
                 group.appendChild(petal);
             }
             
             // Center
+            const centerSize = Math.max(3, size * 0.2);
             const center = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             center.setAttribute('cx', x);
             center.setAttribute('cy', y);
-            center.setAttribute('r', size * 0.25);
+            center.setAttribute('r', centerSize);
             center.setAttribute('fill', '#ffd966');
+            center.setAttribute('opacity', opacity);
             group.appendChild(center);
+            
+            // Add random animation delay for varied floating
+            group.style.animationDelay = Math.random() * 2 + 's';
+            group.style.animationDuration = (2.5 + Math.random() * 1.5) + 's';
             
             canvas.appendChild(group);
             flowers.push(group);
@@ -226,60 +286,54 @@
             
             calculateTypeSpeed();
             
-            const progress = (branchCount * 0.05) % 1;
+            // Initialize main branches on first key
+            if (mainBranches.length === 0) {
+                initMainBranches();
+            }
             
             if (vowels.includes(key)) {
-                // Create flower on last branch or random position
+                // Create flower away from branches when slow, can overlap when fast
                 let x, y;
-                if (branches.length > 0) {
-                    const lastBranch = branches[branches.length - 1];
-                    x = lastBranch.endX + (Math.random() - 0.5) * 30;
-                    y = lastBranch.endY + (Math.random() - 0.5) * 30;
-                } else {
-                    const corner = getCornerPosition();
-                    const pos = getProgressPosition(corner.x, corner.y, progress);
-                    x = pos.x;
-                    y = pos.y;
-                }
+                const branchIndex = Math.floor(Math.random() * 4);
+                const point = getRandomPointOnMainBranch(branchIndex);
+                
+                // Distance from branch based on speed
+                const distance = typeSpeed < 0.5 ? 60 + Math.random() * 40 : 20 + Math.random() * 30;
+                const offsetAngle = point.angle + Math.PI / 2 + (Math.random() - 0.5) * Math.PI;
+                
+                x = point.x + Math.cos(offsetAngle) * distance;
+                y = point.y + Math.sin(offsetAngle) * distance;
                 
                 createFlower(x, y, key, typeSpeed);
             } else if (consonants.includes(key)) {
-                // Create branch
-                let startX, startY;
+                // Create branch growing from main branches or previous branches
+                let startX, startY, baseAngle;
                 
-                if (branches.length === 0 || branchCount % 8 === 0) {
-                    const corner = getCornerPosition();
-                    cornerPositions.push(corner);
-                    startX = corner.x;
-                    startY = corner.y;
+                if (branches.length === 0 || Math.random() > 0.7) {
+                    // Start from main branch
+                    const branchIndex = Math.floor(Math.random() * 4);
+                    const point = getRandomPointOnMainBranch(branchIndex);
+                    startX = point.x;
+                    startY = point.y;
+                    baseAngle = point.angle;
                 } else {
+                    // Grow from existing branch
                     const lastBranch = branches[branches.length - 1];
                     startX = lastBranch.endX;
                     startY = lastBranch.endY;
+                    baseAngle = lastBranch.angle;
                 }
                 
-                const baseAngle = Math.atan2(
-                    window.innerHeight / 2 - startY,
-                    window.innerWidth / 2 - startX
-                );
-                
-                const angle = baseAngle + (Math.random() - 0.5) * Math.PI / 3;
-                const length = 40 + Math.random() * 40 + typeSpeed * 30;
-                
-                // Color based on speed
-                const speedColor = Math.floor(typeSpeed * 155);
-                const r = 139 - speedColor;
-                const g = 115 - speedColor;
-                const b = 85 - speedColor;
-                const color = `rgb(${r}, ${g}, ${b})`;
-                
-                createBranch(startX, startY, angle, length, color);
-                branchCount++;
+                createBranch(startX, startY, baseAngle, typeSpeed);
             }
         }
 
         function clearCanvas() {
-            // Add falling animation
+            // Add falling animation to branches
+            mainBranches.forEach(branch => {
+                branch.element.classList.add('falling');
+            });
+            
             branches.forEach(branch => {
                 branch.element.classList.add('falling');
             });
@@ -290,13 +344,12 @@
             
             // Clear arrays and remove elements after animation
             setTimeout(() => {
+                mainBranches.forEach(branch => branch.element.remove());
                 branches.forEach(branch => branch.element.remove());
                 flowers.forEach(flower => flower.remove());
+                mainBranches = [];
                 branches = [];
                 flowers = [];
-                branchCount = 0;
-                currentCorner = 0;
-                cornerPositions = [];
             }, 2000);
         }
 
