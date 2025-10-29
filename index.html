@@ -66,7 +66,6 @@ window.addEventListener("resize", () => {
   height = canvas.height = window.innerHeight;
 });
 
-// === GLOBAL STATE ===
 let branches = [];
 let flowers = [];
 let lastKeyTime = Date.now();
@@ -97,9 +96,7 @@ function updateSpeed() {
   stage = getSpeedStage(typingSpeed);
   lastKeyTime = now;
 
-  document.getElementById("speedIndicator").innerText =
-    `Typing Stage: ${stage}`;
-
+  document.getElementById("speedIndicator").innerText = `Typing Stage: ${stage}`;
   const bgDark = Math.min(typingSpeed / 5, 1);
   document.body.style.backgroundColor = `rgb(${232 - 180 * bgDark}, ${244 - 180 * bgDark}, ${248 - 180 * bgDark})`;
 }
@@ -109,12 +106,11 @@ function random(min, max) { return Math.random() * (max - min) + min; }
 function midPoint(x1, y1, x2, y2) { return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 }; }
 function distance(x1, y1, x2, y2) { return Math.hypot(x2 - x1, y2 - y1); }
 
-// === BRANCHES ===
+// === BRANCH LOGIC ===
 function addBranch(parent) {
   const baseAngle = parent.angle;
   const dark = Math.min(0.25 + stage * 0.18, 1);
   const color = `rgb(${180 - 130 * dark}, ${120 - 80 * dark}, ${60 - 60 * dark})`;
-
   let tries = 0, newX, newY, angle, len;
   do {
     angle = baseAngle + random(-Math.PI / 5, Math.PI / 5);
@@ -122,5 +118,167 @@ function addBranch(parent) {
     newX = parent.x2 + Math.cos(angle) * len;
     newY = parent.y2 + Math.sin(angle) * len;
     tries++;
-  } while (
-    branches.some(b => dista
+  } while (branches.some(b => distance(newX, newY, b.x2, b.y2) < 25) && tries < 8);
+
+  const b = {
+    x1: parent.x2,
+    y1: parent.y2,
+    x2: newX,
+    y2: newY,
+    angle,
+    color,
+    thickness: 1.2 + stage * 0.8,
+    parent,
+    children: []
+  };
+  branches.push(b);
+  parent.children.push(b);
+  return b;
+}
+
+function drawBranches() {
+  branches.forEach((b) => {
+    ctx.strokeStyle = b.color;
+    ctx.lineWidth = b.thickness;
+    ctx.lineCap = "butt";
+    ctx.beginPath();
+    ctx.moveTo(b.x1, b.y1);
+    ctx.lineTo(b.x2, b.y2);
+    ctx.stroke();
+  });
+}
+
+// === FLOWER LOGIC ===
+function addFlowerBetween(b1, b2, vowel) {
+  const baseColor = vowelColors[vowel.toLowerCase()] || "#fce4ec";
+  const opacity = [0.3, 0.45, 0.65, 0.85, 1][stage - 1];
+  const mid = midPoint(
+    (b1.x1 + b1.x2) / 2,
+    (b1.y1 + b1.y2) / 2,
+    (b2.x1 + b2.x2) / 2,
+    (b2.y1 + b2.y2) / 2
+  );
+
+  // Cluster same vowels softly around each other
+  const sameLetter = flowers.filter(f => f.letter === vowel);
+  let offsetX = 0, offsetY = 0;
+  if (sameLetter.length > 0) {
+    const radius = 25 + sameLetter.length * 8;
+    const angle = random(0, Math.PI * 2);
+    offsetX = Math.cos(angle) * radius;
+    offsetY = Math.sin(angle) * radius;
+  } else {
+    offsetX = random(-10, 10);
+    offsetY = random(-10, 10);
+  }
+
+  flowers.push({
+    x: mid.x + offsetX,
+    y: mid.y + offsetY,
+    baseColor,
+    opacity,
+    len: 8 + stage * 5,
+    petalCount: 5,
+    letter: vowel,
+    floatPhase: Math.random() * Math.PI * 2
+  });
+}
+
+function drawFlowers(time) {
+  flowers.forEach((f) => {
+    const floatY = f.y + Math.sin(time / 800 + f.floatPhase) * 6;
+    const floatX = f.x + Math.cos(time / 900 + f.floatPhase) * 4;
+    ctx.save();
+    ctx.translate(floatX, floatY);
+    for (let i = 0; i < f.petalCount; i++) {
+      ctx.rotate((2 * Math.PI) / f.petalCount);
+      ctx.beginPath();
+      ctx.fillStyle = f.baseColor;
+      ctx.globalAlpha = f.opacity;
+
+      if (stage <= 2) {
+        ctx.ellipse(0, 10, 5 + stage * 2, 5 + stage * 2, 0, 0, 2 * Math.PI);
+      } else if (stage === 3 || stage === 4) {
+        ctx.ellipse(0, 10, 6 + stage * 3, 10 + stage * 5, 0, 0, 2 * Math.PI);
+      } else {
+        ctx.moveTo(0, 0);
+        ctx.lineTo(5, 20 + stage * 5);
+        ctx.lineTo(0, 28 + stage * 7);
+        ctx.lineTo(-5, 20 + stage * 5);
+        ctx.closePath();
+      }
+      ctx.fill();
+    }
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  });
+}
+
+// === DRAW LOOP ===
+function draw(time) {
+  ctx.clearRect(0, 0, width, height);
+  drawBranches();
+  drawFlowers(time);
+  requestAnimationFrame(draw);
+}
+draw(0);
+
+// === INITIAL BRANCH ===
+const base = {
+  x1: 50,
+  y1: height / 2,
+  x2: 100,
+  y2: height / 2,
+  angle: 0,
+  color: "#c19a6b",
+  thickness: 2,
+  parent: null,
+  children: [],
+};
+branches.push(base);
+
+// === KEY INPUT ===
+document.addEventListener("keydown", (e) => {
+  if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
+    updateSpeed();
+
+    if ("aeiou".includes(e.key.toLowerCase())) {
+      if (branches.length >= 2) {
+        const b1 = branches[branches.length - 1];
+        const b2 = branches[branches.length - 2];
+        addFlowerBetween(b1, b2, e.key);
+      }
+    } else {
+      const parent = branches[Math.floor(random(0, branches.length))];
+      addBranch(parent);
+    }
+  }
+});
+
+// === CLEAR ===
+document.getElementById("clearBtn").addEventListener("click", () => {
+  const fall = setInterval(() => {
+    branches.forEach((b) => { b.y1 += 15; b.y2 += 15; });
+    flowers.forEach((f) => (f.y += 15));
+    if (branches[0].y1 > height + 100) {
+      clearInterval(fall);
+      branches = [];
+      flowers = [];
+      // restart at same place
+      branches.push({
+        x1: 50,
+        y1: height / 2,
+        x2: 100,
+        y2: height / 2,
+        angle: 0,
+        color: "#c19a6b",
+        thickness: 2,
+        parent: null,
+        children: [],
+      });
+    }
+  }, 30);
+});
+</script>
+</body>
+</html>
