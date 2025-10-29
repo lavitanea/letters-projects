@@ -108,7 +108,6 @@ function updateSpeed() {
 function random(min, max) {
   return Math.random() * (max - min) + min;
 }
-
 function midPoint(x1, y1, x2, y2) {
   return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
 }
@@ -134,6 +133,7 @@ function addBranch(parent) {
     color,
     thickness: thick,
     parent,
+    children: [],
   };
   branches.push(b);
   parent.children.push(b);
@@ -152,7 +152,7 @@ function drawBranches() {
   });
 }
 
-// === FLOWERS BETWEEN BRANCHES ===
+// === FLOWERS ===
 function addFlowerBetween(branchA, branchB, vowel) {
   const baseColor = vowelColors[vowel.toLowerCase()] || "#fce4ec";
   const opacity = [0.3, 0.45, 0.65, 0.85, 1][stage - 1];
@@ -163,8 +163,8 @@ function addFlowerBetween(branchA, branchB, vowel) {
   const mid = midPoint(midA.x, midA.y, midB.x, midB.y);
 
   flowers.push({
-    x: mid.x,
-    y: mid.y,
+    x: mid.x + random(-10, 10),
+    y: mid.y + random(-10, 10),
     baseColor,
     len,
     opacity,
@@ -191,6 +191,7 @@ function drawFlowers(time) {
       } else if (stage === 3 || stage === 4) {
         ctx.ellipse(0, 10, 6 + stage * 3, 10 + stage * 5, 0, 0, 2 * Math.PI);
       } else {
+        // Stage 5: sharp petals
         ctx.moveTo(0, 0);
         ctx.lineTo(5, 20 + stage * 5);
         ctx.lineTo(0, 28 + stage * 7);
@@ -213,7 +214,7 @@ function draw(time) {
 }
 draw(0);
 
-// === INITIAL TREE ===
+// === INITIAL BRANCH ===
 const base = {
   x1: 50,
   y1: height / 2,
@@ -233,19 +234,14 @@ document.addEventListener("keydown", (e) => {
     updateSpeed();
 
     if ("aeiou".includes(e.key.toLowerCase())) {
-      // vowel: find two sibling branches (if exist)
-      const parents = branches.filter(b => b.children.length >= 2);
-      if (parents.length) {
-        const p = parents[Math.floor(random(0, parents.length))];
-        const children = p.children;
-        const a = children[children.length - 2];
-        const b = children[children.length - 1];
-        if (a && b) addFlowerBetween(a, b, e.key);
+      if (branches.length >= 2) {
+        const b1 = branches[branches.length - 1];
+        const b2 = branches[branches.length - 2];
+        addFlowerBetween(b1, b2, e.key);
       }
     } else {
-      // consonant: branch from a random existing branch
+      // consonant: branch from random existing branch
       const parent = branches[Math.floor(random(0, branches.length))];
-      if (!parent.children) parent.children = [];
       addBranch(parent);
     }
   }
