@@ -1,271 +1,579 @@
+<!-- Garden of Letters - Fixed and Debugged -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Visualising Words</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>The Garden of Letters - Fixed</title>
 <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
   body {
     margin: 0;
+    font-family: 'Georgia', serif;
     overflow: hidden;
-    background-color: #e8f4f8;
-    font-family: "Poppins", sans-serif;
-    transition: background 0.6s ease;
+    background: linear-gradient(180deg, #a8d8ea 0%, #c8e5f0 40%, #9ec89e 70%, #7ea85c 100%);
+    position: relative;
   }
-
-  h1 {
-    text-align: center;
-    margin-top: 10px;
-    font-size: 2em;
-    color: #444;
-  }
-
-  #speedIndicator {
-    text-align: center;
-    font-size: 1.1em;
-    color: #555;
-    transition: color 0.5s;
-  }
-
-  #clearBtn {
+  
+  /* Detailed grass field */
+  .grass-layer {
     position: fixed;
-    top: 10px;
-    right: 10px;
-    background: #fff;
-    border: 2px solid #ccc;
-    border-radius: 12px;
-    padding: 8px 16px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: 
+      repeating-linear-gradient(
+        92deg,
+        transparent,
+        transparent 1px,
+        rgba(107, 142, 35, 0.08) 1px,
+        rgba(107, 142, 35, 0.08) 2px
+      ),
+      repeating-linear-gradient(
+        88deg,
+        transparent,
+        transparent 2px,
+        rgba(85, 107, 47, 0.06) 2px,
+        rgba(85, 107, 47, 0.06) 3px
+      ),
+      linear-gradient(180deg, transparent 0%, rgba(85, 107, 47, 0.3) 50%, rgba(75, 97, 37, 0.5) 100%);
+    pointer-events: none;
+  }
+  
+  /* Individual grass blades */
+  .grass-blade {
+    position: fixed;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to top, #5a7d3a, #8eb65e, transparent);
+    transform-origin: bottom center;
+    opacity: 0.5;
+    animation: sway 3s ease-in-out infinite;
+  }
+  
+  .grass-blade.tall {
+    width: 3px;
+    opacity: 0.7;
+    background: linear-gradient(to top, #4a6d2a, #7ea64e, transparent);
+  }
+  
+  @keyframes sway {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  
+  /* Rain effect */
+  .raindrop {
+    position: fixed;
+    width: 2px;
+    height: 20px;
+    background: linear-gradient(transparent, rgba(174, 194, 224, 0.6));
+    animation: fall linear;
+    pointer-events: none;
+  }
+  
+  @keyframes fall {
+    to { transform: translateY(100vh); }
+  }
+  
+  #app {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  h1 {
+    position: absolute;
+    left: 32px;
+    top: 24px;
+    margin: 0;
+    color: #2c3e1f;
+    font-weight: 400;
+    font-size: 28px;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+  }
+  
+  #typedDisplay {
+    position: absolute;
+    left: 32px;
+    bottom: 24px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #2c3e1f;
+    padding: 12px 24px;
+    border-radius: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-size: 18px;
+    font-family: 'Courier New', monospace;
+    max-width: 70%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 2px;
+    min-width: 200px;
+  }
+  
+  #controls {
+    position: absolute;
+    right: 24px;
+    top: 24px;
+    display: flex;
+    gap: 12px;
+  }
+  
+  button {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
     cursor: pointer;
-    transition: all 0.3s;
-    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: #2c3e1f;
+    transition: transform 0.2s, box-shadow 0.2s;
   }
-  #clearBtn:hover {
-    background: #ffdddd;
-    border-color: #ff8888;
+  
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   }
-
-  canvas { display: block; }
+  
+  button:active {
+    transform: translateY(0);
+  }
+  
+  /* Sun */
+  .sun {
+    position: fixed;
+    top: 80px;
+    right: 100px;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, #ffe66d 0%, #ffed4e 50%, transparent 70%);
+    border-radius: 50%;
+    opacity: 1;
+    transition: opacity 1s;
+    pointer-events: none;
+    box-shadow: 0 0 60px rgba(255, 230, 109, 0.6);
+  }
+  
+  .sun.hidden {
+    opacity: 0;
+  }
+  
+  canvas {
+    display: block;
+  }
 </style>
 </head>
 <body>
-<h1>Visualising Words</h1>
-<div id="speedIndicator">Typing Stage: 1 (Very Slow)</div>
-<button id="clearBtn">Clear</button>
-<canvas id="visualCanvas"></canvas>
-
+<!-- Grass layers -->
+<div class="grass-layer"></div>
 <script>
-const canvas = document.getElementById("visualCanvas");
-const ctx = canvas.getContext("2d");
-let width = (canvas.width = window.innerWidth);
-let height = (canvas.height = window.innerHeight);
+  // Generate detailed grass blades
+  for (let i = 0; i < 150; i++) {
+    const blade = document.createElement('div');
+    blade.className = Math.random() > 0.7 ? 'grass-blade tall' : 'grass-blade';
+    blade.style.left = Math.random() * 100 + '%';
+    blade.style.height = (15 + Math.random() * 50) + 'px';
+    blade.style.animationDelay = Math.random() * 3 + 's';
+    blade.style.animationDuration = (2 + Math.random() * 3) + 's';
+    document.body.appendChild(blade);
+  }
+</script>
 
-window.addEventListener("resize", () => {
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
-});
+<!-- Sun -->
+<div class="sun" id="sun"></div>
 
-// GLOBAL STATE
-let branches = [];
-let flowers = [];
-let lastKeyTime = Date.now();
-let typingSpeed = 0;
-let stage = 1;
+<div id="app">
+  <h1>The Garden of Letters</h1>
+  <div id="typedDisplay">Type to grow your garden...</div>
+  <div id="controls">
+    <button id="clearBtn">Clear Garden</button>
+    <button id="exportBtn">Save Image</button>
+  </div>
+  <canvas id="visualCanvas"></canvas>
+</div>
+<script>
+(() => {
+  const canvas = document.getElementById('visualCanvas');
+  const ctx = canvas.getContext('2d', { alpha: true });
+  let W = canvas.width = window.innerWidth;
+  let H = canvas.height = window.innerHeight;
+  window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
 
-const vowelColors = {
-  a: "#f7b5d5",
-  e: "#f9d6a3",
-  i: "#c5e1a5",
-  o: "#b5d5f7",
-  u: "#d1b5f7",
-};
+  // STATE
+  const trees = []; // Multiple trees
+  const flowers = [];
+  let typed = '';
+  const keyTimes = [];
+  const MIN_HISTORY = 6; // reduced for quicker detection
+  let currentStage = 1;
+  let isRaining = false;
 
-// SPEED STAGES
-function getSpeedStage(s) {
-  if (s < 1) return 1;
-  if (s < 2) return 2;
-  if (s < 3) return 3;
-  if (s < 4) return 4;
-  return 5;
-}
+  // audio handles
+  let rainAudio = null;
+  let thunderInterval = null;
 
-function updateSpeed() {
-  const now = Date.now();
-  const diff = (now - lastKeyTime) / 1000;
-  typingSpeed = 1 / diff;
-  stage = getSpeedStage(typingSpeed);
-  lastKeyTime = now;
-
-  document.getElementById("speedIndicator").innerText = `Typing Stage: ${stage}`;
-
-  const bgDark = Math.min(typingSpeed / 5, 1);
-  document.body.style.backgroundColor = `rgb(${232 - 180 * bgDark}, ${244 - 180 * bgDark}, ${248 - 180 * bgDark})`;
-}
-
-// UTILS
-function random(min, max) { return Math.random() * (max - min) + min; }
-function midPoint(x1, y1, x2, y2) { return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 }; }
-function distance(x1, y1, x2, y2) { return Math.hypot(x2 - x1, y2 - y1); }
-
-// BRANCH LOGIC
-function addBranch(parent) {
-  const baseAngle = parent.angle;
-  const dark = Math.min(0.25 + stage * 0.18, 1);
-  const color = `rgb(${180 - 130 * dark}, ${120 - 80 * dark}, ${60 - 60 * dark})`;
-  let tries = 0, newX, newY, angle, len;
-  do {
-    angle = baseAngle + random(-Math.PI / 5, Math.PI / 5);
-    len = random(40, 70) * (1 + stage * 0.15);
-    newX = parent.x2 + Math.cos(angle) * len;
-    newY = parent.y2 + Math.sin(angle) * len;
-    tries++;
-  } while (branches.some(b => distance(newX, newY, b.x2, b.y2) < 25) && tries < 8);
-
-  const b = {
-    x1: parent.x2,
-    y1: parent.y2,
-    x2: newX,
-    y2: newY,
-    angle,
-    color,
-    thickness: 1.2 + stage * 0.8,
-    parent,
-    children: []
+  // Pastel colors for each vowel
+  const vowelColors = {
+    a: '#ffb3ba',
+    e: '#ffffba',
+    i: '#bae1ff',
+    o: '#ffdfba',
+    u: '#e0bbff'
   };
-  branches.push(b);
-  parent.children.push(b);
-  return b;
-}
 
-function drawBranches() {
-  branches.forEach((b) => {
-    ctx.strokeStyle = b.color;
-    ctx.lineWidth = b.thickness;
-    ctx.lineCap = "butt";
-    ctx.beginPath();
-    ctx.moveTo(b.x1, b.y1);
-    ctx.lineTo(b.x2, b.y2);
-    ctx.stroke();
-  });
-}
-
-// FLOWERS
-function addFlowerBetween(b1, b2, vowel) {
-  const baseColor = vowelColors[vowel.toLowerCase()] || "#fce4ec";
-  const opacity = [0.3, 0.45, 0.65, 0.85, 1][stage - 1];
-  const mid = midPoint(
-    (b1.x1 + b1.x2) / 2,
-    (b1.y1 + b1.y2) / 2,
-    (b2.x1 + b2.x2) / 2,
-    (b2.y1 + b2.y2) / 2
-  );
-
-  const sameLetter = flowers.filter(f => f.letter === vowel);
-  let offsetX = 0, offsetY = 0;
-  if (sameLetter.length > 0) {
-    const radius = 25 + sameLetter.length * 8;
-    const angle = random(0, Math.PI * 2);
-    offsetX = Math.cos(angle) * radius;
-    offsetY = Math.sin(angle) * radius;
-  } else {
-    offsetX = random(-10, 10);
-    offsetY = random(-10, 10);
+  function random(min, max) { 
+    return Math.random() * (max - min) + min; 
   }
 
-  flowers.push({
-    x: mid.x + offsetX,
-    y: mid.y + offsetY,
-    baseColor,
-    opacity,
-    len: 8 + stage * 5,
-    petalCount: 5,
-    letter: vowel,
-    floatPhase: Math.random() * Math.PI * 2
-  });
-}
+  function dist(ax, ay, bx, by) { 
+    return Math.hypot(bx - ax, by - ay); 
+  }
 
-function drawFlowers(time) {
-  flowers.forEach((f) => {
-    const floatY = f.y + Math.sin(time / 800 + f.floatPhase) * 6;
-    const floatX = f.x + Math.cos(time / 900 + f.floatPhase) * 4;
+  // Create a new tree
+  function createTree(xPos) {
+    const trunk = {
+      x1: xPos,
+      y1: H - 80,
+      x2: xPos,
+      y2: H - 200,
+      angle: -Math.PI / 2,
+      thickness: 12,
+      segments: [],
+      branches: []
+    };
+    trunk.segments = createTrunkSegments(trunk);
+    return { trunk, branches: [], x: xPos };
+  }
+
+  function createTrunkSegments(branch) {
+    const segments = [];
+    const numSegments = 8;
+    for (let i = 0; i <= numSegments; i++) {
+      const t = i / numSegments;
+      const x = branch.x1 + (branch.x2 - branch.x1) * t + random(-8, 8);
+      const y = branch.y1 + (branch.y2 - branch.y1) * t;
+      const thickness = branch.thickness * (1 - t * 0.3);
+      segments.push({ x, y, thickness });
+    }
+    return segments;
+  }
+
+  // Start with first tree in center
+  function getTreeX(index) {
+    // space trees evenly across width using current count + 1
+    const count = Math.max(1, trees.length + 1);
+    return ((index + 1) * (W / (count + 1)));
+  }
+
+  function getBranchColor(stage) {
+    const colors = [
+      [139, 111, 71],
+      [100, 80, 50],
+      [70, 55, 35],
+      [45, 35, 25]
+    ];
+    const c = colors[Math.max(0, Math.min(colors.length - 1, stage - 1))];
+    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+  }
+
+  function addBranch(treeObj, parent, stage) {
+    // parent may be tree.trunk or a branch object
+    const baseAngle = parent.angle || -Math.PI / 2;
+    let angle = baseAngle + random(-Math.PI / 3, Math.PI / 3);
+    const len = random(50, 120);
+
+    const x1 = parent.segments[parent.segments.length - 1].x;
+    const y1 = parent.segments[parent.segments.length - 1].y;
+    const curvature = random(-0.3, 0.3);
+    const midX = x1 + Math.cos(angle) * len * 0.5 + Math.cos(angle + Math.PI/2) * curvature * 30;
+    const midY = y1 + Math.sin(angle) * len * 0.5 + Math.sin(angle + Math.PI/2) * curvature * 30;
+    const x2 = x1 + Math.cos(angle) * len;
+    const y2 = y1 + Math.sin(angle) * len;
+
+    const thickness = 4 + stage * 1.5;
+
+    const branch = {
+      x1, y1, x2, y2, midX, midY, angle,
+      thickness,
+      parent,
+      children: [],
+      segments: []
+    };
+    const numSegments = 6;
+    for (let i = 0; i <= numSegments; i++) {
+      const t = i / numSegments;
+      const x = (1-t)*(1-t)*x1 + 2*(1-t)*t*midX + t*t*x2;
+      const y = (1-t)*(1-t)*y1 + 2*(1-t)*t*midY + t*t*y2;
+      const segThickness = thickness * (1 - t * 0.4);
+      branch.segments.push({ x, y, thickness: segThickness });
+    }
+    // store on tree
+    treeObj.branches.push(branch);
+    if (parent.children) parent.children.push(branch);
+    return branch;
+  }
+
+  function addFlower(branchLike, letter, stage) {
+    const seg = branchLike.segments[Math.max(0, branchLike.segments.length - 1)];
+    const x = seg.x + random(-20, 20);
+    const y = seg.y + random(-20, 20);
+    const baseColor = vowelColors[letter.toLowerCase()] || '#ffccdd';
+    const flower = { x, y, color: baseColor, char: letter, stage, createdAt: performance.now(), floatPhase: random(0, Math.PI * 2), rotationOffset: random(0, Math.PI * 2) };
+    flowers.push(flower);
+  }
+
+  function brightenColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, (num >> 16) + amt);
+    const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+    const B = Math.min(255, (num & 0x0000FF) + amt);
+    return `rgb(${R}, ${G}, ${B})`;
+  }
+
+  function drawFlower(f, t) {
     ctx.save();
-    ctx.translate(floatX, floatY);
-    for (let i = 0; i < f.petalCount; i++) {
-      ctx.rotate((2 * Math.PI) / f.petalCount);
+    const age = (t - f.createdAt) / 1000;
+    const fx = f.x + Math.cos(t / 1200 + f.floatPhase) * 2;
+    const fy = f.y + Math.sin(t / 1000 + f.floatPhase) * 3;
+    ctx.translate(fx, fy);
+    ctx.rotate(t / 8000 + f.rotationOffset);
+    const scale = Math.min(1, age * 3 + 0.2);
+    ctx.scale(scale, scale);
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+    // simple petals
+    ctx.fillStyle = f.color;
+    for (let i = 0; i < 6; i++) {
       ctx.beginPath();
-      ctx.fillStyle = f.baseColor;
-      ctx.globalAlpha = f.opacity;
-
-      if (stage <= 2) {
-        ctx.ellipse(0, 10, 5 + stage * 2, 5 + stage * 2, 0, 0, 2 * Math.PI);
-      } else if (stage === 3 || stage === 4) {
-        ctx.ellipse(0, 10, 6 + stage * 3, 10 + stage * 5, 0, 0, 2 * Math.PI);
-      } else {
-        ctx.moveTo(0, 0);
-        ctx.lineTo(5, 20 + stage * 5);
-        ctx.lineTo(0, 28 + stage * 7);
-        ctx.lineTo(-5, 20 + stage * 5);
-        ctx.closePath();
-      }
+      ctx.ellipse(0, -f.stage * 4 - 6, 6 + f.stage * 2, 12 + f.stage * 3, (i / 6) * Math.PI * 2, 0, Math.PI * 2);
       ctx.fill();
+      ctx.rotate(Math.PI * 2 / 6);
     }
+    // center
+    ctx.beginPath();
+    ctx.arc(0, 0, 6 + f.stage, 0, Math.PI * 2);
+    ctx.fillStyle = '#fffacd';
+    ctx.fill();
     ctx.restore();
-    ctx.globalAlpha = 1;
-  });
-}
+  }
 
-// DRAW LOOP
-function draw(time) {
-  ctx.clearRect(0, 0, width, height);
-  drawBranches();
-  drawFlowers(time);
-  requestAnimationFrame(draw);
-}
-draw(0);
-
-// === INITIAL MAIN TRUNK ===
-const mainTrunk = {
-  x1: 80,
-  y1: height - 50,
-  x2: 140,
-  y2: height - 50,
-  angle: 0,
-  color: "#c19a6b",
-  thickness: 4,
-  parent: null,
-  children: []
-};
-branches.push(mainTrunk);
-
-// KEY INPUT
-document.addEventListener("keydown", (e) => {
-  if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
-    updateSpeed();
-    if ("aeiou".includes(e.key.toLowerCase())) {
-      if (branches.length >= 2) {
-        const b1 = branches[branches.length - 1];
-        const b2 = branches[branches.length - 2];
-        addFlowerBetween(b1, b2, e.key);
-      }
-    } else {
-      const parent = branches[Math.floor(random(0, branches.length))];
-      addBranch(parent);
+  function drawBranch(b, stage) {
+    if (!b.segments || b.segments.length < 2) return;
+    const color = getBranchColor(stage);
+    for (let i = 0; i < b.segments.length - 1; i++) {
+      const s1 = b.segments[i];
+      const s2 = b.segments[i + 1];
+      ctx.strokeStyle = color;
+      ctx.lineWidth = s1.thickness;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(s1.x, s1.y);
+      ctx.lineTo(s2.x, s2.y);
+      ctx.stroke();
     }
   }
-});
 
-// CLEAR BUTTON
-document.getElementById("clearBtn").addEventListener("click", () => {
-  const fall = setInterval(() => {
-    branches.forEach((b) => { b.y1 += 15; b.y2 += 15; });
-    flowers.forEach((f) => (f.y += 15));
-    if (branches[0].y1 > height + 200) {
-      clearInterval(fall);
-      branches = [];
-      flowers = [];
-      branches.push({ ...mainTrunk });
+  function computeStage() {
+    if (keyTimes.length < MIN_HISTORY) return 1;
+    const recent = keyTimes.slice(-MIN_HISTORY);
+    const diffs = [];
+    for (let i = 1; i < recent.length; i++) diffs.push(recent[i] - recent[i - 1]);
+    const avgDelay = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+    const keysPerSecond = 1000 / avgDelay;
+    if (keysPerSecond > 7) {
+      startRain();
     }
-  }, 30);
-});
+    if (keysPerSecond < 2) return 1;
+    if (keysPerSecond < 3.5) return 2;
+    if (keysPerSecond < 5.5) return 3;
+    return 4;
+  }
+
+  function startRain() {
+    if (isRaining) return;
+    isRaining = true;
+    document.getElementById('sun').classList.add('hidden');
+
+    // start or reuse rain audio
+    if (!rainAudio) {
+      rainAudio = document.createElement('audio');
+      rainAudio.id = 'rain-audio';
+      // soft rain sample (CC0 / free to use)
+      rainAudio.src = 'https://cdn.pixabay.com/audio/2022/03/15/audio_8aab9e28b4.mp3';
+      rainAudio.loop = true;
+      rainAudio.volume = 0.45;
+      document.body.appendChild(rainAudio);
+    }
+    const playPromise = rainAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => { /* autoplay may be blocked; user interaction already happened (typing) */ });
+    }
+
+    // thunder occasional
+    if (thunderInterval) clearInterval(thunderInterval);
+    thunderInterval = setInterval(() => {
+      if (!isRaining) { clearInterval(thunderInterval); thunderInterval = null; return; }
+      if (Math.random() < 0.12) {
+        const thunder = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_979a3d4b94.mp3');
+        thunder.volume = 0.12;
+        thunder.play().catch(()=>{});
+      }
+    }, 3000);
+
+    // visual raindrops
+    const rainInterval = setInterval(() => {
+      if (!isRaining) { clearInterval(rainInterval); return; }
+      for (let i = 0; i < 3; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'raindrop';
+        drop.style.left = Math.random() * 100 + '%';
+        drop.style.top = '-20px';
+        drop.style.animationDuration = (0.5 + Math.random() * 0.3) + 's';
+        document.body.appendChild(drop);
+        setTimeout(() => drop.remove(), 1000);
+      }
+    }, 50);
+  }
+
+  function stopRain() {
+    // intentionally left empty per your request: don't stop rain automatically when typing slows
+  }
+
+  // RENDER LOOP
+  function render(t) {
+    ctx.clearRect(0, 0, W, H);
+    trees.forEach(treeObj => {
+      // draw trunk
+      const trunk = treeObj.trunk;
+      drawBranch(trunk, currentStage);
+      // draw tree branches stored on treeObj.branches
+      treeObj.branches.forEach(b => drawBranch(b, currentStage));
+    });
+    // draw flowers
+    flowers.forEach(f => drawFlower(f, t));
+    requestAnimationFrame(render);
+  }
+
+  // TYPING HANDLER
+  document.addEventListener('keydown', (e) => {
+    // Handle spacebar for new tree
+    if (e.key === ' ') {
+      e.preventDefault();
+      const newTreeIndex = trees.length;
+      const newX = getTreeX(newTreeIndex);
+      const newTree = createTree(newX);
+      trees.push(newTree);
+      // ensure trunk segments created
+      newTree.trunk.segments = createTrunkSegments(newTree.trunk);
+      typed += ' ';
+      document.getElementById('typedDisplay').innerText = typed;
+      return;
+    }
+
+    if (e.key.length === 1 && /[a-z]/i.test(e.key)) {
+      const now = performance.now();
+      keyTimes.push(now);
+      if (keyTimes.length >= MIN_HISTORY) {
+        currentStage = computeStage();
+      }
+
+      const letter = e.key;
+      typed += letter;
+      document.getElementById('typedDisplay').innerText = typed;
+
+      const isVowel = /[aeiou]/i.test(letter);
+
+      const currentTree = trees[trees.length - 1];
+      if (!currentTree) {
+        // safety: create first tree if none
+        trees.push(createTree(W / 2));
+      }
+
+      if (!isVowel) {
+        // CONSONANTS create branches
+        const allBranches = [currentTree.trunk, ...currentTree.branches];
+        const target = allBranches[Math.floor(Math.random() * allBranches.length)];
+        addBranch(currentTree, target, currentStage);
+      } else {
+        // VOWELS create flowers attached to a nearby branch/trunk
+        const allBranches = [currentTree.trunk, ...currentTree.branches];
+        const target = allBranches.length ? allBranches[Math.floor(Math.random() * allBranches.length)] : currentTree.trunk;
+        addFlower(target, letter, currentStage);
+      }
+
+      // also check typing speed for rain (startRain called inside computeStage)
+      // ensure check always runs even if MIN_HISTORY not reached - use lightweight check
+      if (keyTimes.length >= 3) {
+        const recent = keyTimes.slice(-6);
+        const diffs = [];
+        for (let i = 1; i < recent.length; i++) diffs.push(recent[i] - recent[i - 1]);
+        if (diffs.length) {
+          const avg = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+          const kps = 1000 / avg;
+          if (kps > 7) startRain();
+        }
+      }
+    }
+  });
+
+  // CLEAR with falling animation
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    const fallInterval = setInterval(() => {
+      trees.forEach(tree => {
+        if (tree.trunk && tree.trunk.segments) tree.trunk.segments.forEach(s => s.y += 15);
+        tree.branches.forEach(b => { if (b.segments) b.segments.forEach(s => s.y += 15); });
+      });
+      flowers.forEach(f => f.y += 15);
+
+      if (trees[0] && trees[0].trunk.segments[0].y > H + 150) {
+        clearInterval(fallInterval);
+        trees.length = 0;
+        flowers.length = 0;
+        typed = '';
+        keyTimes.length = 0;
+        currentStage = 1;
+        // do not stopRain per user request
+        document.getElementById('typedDisplay').innerText = 'Type to grow your garden...';
+        trees.push(createTree(W / 2));
+      }
+    }, 30);
+  });
+
+  // EXPORT
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'garden-of-letters.png';
+    a.click();
+  });
+
+  // Seed initial branches
+  setTimeout(() => {
+    trees.push(createTree(W / 2));
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        const treeObj = trees[0];
+        const parent = treeObj.branches.length > 0 
+          ? treeObj.branches[Math.floor(Math.random() * treeObj.branches.length)]
+          : treeObj.trunk;
+        addBranch(treeObj, parent, 1);
+      }, i * 200);
+    }
+  }, 300);
+
+  // Start render loop
+  requestAnimationFrame(render);
+})();
 </script>
 </body>
 </html>
