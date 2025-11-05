@@ -108,11 +108,12 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     font-size: 18px;
     font-family: 'Courier New', monospace;
-    max-width: 70%;
+    width: 600px;
+    height: 80px;
     white-space: pre-wrap;
     word-wrap: break-word;
     letter-spacing: 2px;
-    min-width: 200px;
+    overflow-y: auto;
     z-index: 100;
   }
   
@@ -157,14 +158,40 @@
     background: radial-gradient(circle, #ffe66d 0%, #ffed4e 50%, transparent 70%);
     border-radius: 50%;
     opacity: 1;
-    transition: opacity 1s;
+    transition: top 1s ease, opacity 1s;
     pointer-events: none;
     box-shadow: 0 0 60px rgba(255, 230, 109, 0.6);
-    z-index: 10;
+    z-index: 1;
   }
   
-  .sun.hidden {
+  .sun.setting {
+    top: 120%;
     opacity: 0;
+  }
+  
+  /* Birds */
+  .bird {
+    position: fixed;
+    pointer-events: none;
+    z-index: 5;
+    animation: flyAcross linear infinite;
+  }
+  
+  .bird svg {
+    width: 40px;
+    height: 25px;
+  }
+  
+  @keyframes flyAcross {
+    0% {
+      transform: translateX(-100px) translateY(0px);
+    }
+    50% {
+      transform: translateX(50vw) translateY(-20px);
+    }
+    100% {
+      transform: translateX(calc(100vw + 100px)) translateY(0px);
+    }
   }
   
   canvas {
@@ -190,6 +217,44 @@
 
 <!-- Sun -->
 <div class="sun" id="sun"></div>
+
+<!-- Birds with SVG -->
+<div class="bird" style="top: 15%; left: 20%; animation-duration: 25s; animation-delay: 0s;">
+  <svg viewBox="0 0 40 25" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 5,15 Q 10,8 15,12 Q 20,5 25,12 Q 30,8 35,15" 
+          fill="none" stroke="#2c3e1f" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  </svg>
+</div>
+<div class="bird" style="top: 25%; left: 60%; animation-duration: 30s; animation-delay: 5s;">
+  <svg viewBox="0 0 40 25" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 5,15 Q 10,8 15,12 Q 20,5 25,12 Q 30,8 35,15" 
+          fill="none" stroke="#2c3e1f" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  </svg>
+</div>
+<div class="bird" style="top: 10%; left: 80%; animation-duration: 28s; animation-delay: 10s;">
+  <svg viewBox="0 0 40 25" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 8,18 Q 15,10 20,15" 
+          fill="none" stroke="#2c3e1f" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  </svg>
+</div>
+<div class="bird" style="top: 20%; left: 40%; animation-duration: 32s; animation-delay: 15s;">
+  <svg viewBox="0 0 40 25" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 5,15 Q 10,8 15,12 Q 20,5 25,12 Q 30,8 35,15" 
+          fill="none" stroke="#2c3e1f" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  </svg>
+</div>
+<div class="bird" style="top: 12%; left: 10%; animation-duration: 27s; animation-delay: 20s;">
+  <svg viewBox="0 0 40 25" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 8,18 Q 15,10 20,15" 
+          fill="none" stroke="#2c3e1f" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  </svg>
+</div>
+<div class="bird" style="top: 18%; left: 70%; animation-duration: 29s; animation-delay: 8s;">
+  <svg viewBox="0 0 40 25" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 5,12 Q 12,5 20,10 Q 28,5 35,12" 
+          fill="none" stroke="#2c3e1f" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  </svg>
+</div>
 
 <div id="app">
   <h1>The Garden of Letters</h1>
@@ -273,13 +338,13 @@ function stopRainSound() {
   let isRaining = false;
   let rainInterval = null;
 
-  // Pastel colors for each vowel
+  // Soft pastel colors for each vowel (based on reference images)
   const vowelColors = {
-    a: '#ffb3ba',
-    e: '#ffffba',
-    i: '#bae1ff',
-    o: '#ffdfba',
-    u: '#e0bbff'
+    a: '#f5c6d6',  // soft pink
+    e: '#fffacd',  // soft cream/yellow
+    i: '#c6d9f5',  // soft blue
+    o: '#ffe4d9',  // soft peach
+    u: '#dcc6f5'   // soft lavender
   };
 
   function random(min, max) { 
@@ -321,10 +386,10 @@ function stopRainSound() {
 
   function getBranchColor(stage) {
     const colors = [
-      [139, 111, 71],
-      [100, 80, 50],
-      [70, 55, 35],
-      [45, 35, 25]
+      [139, 111, 71],   // Stage 1: light brown
+      [100, 80, 50],    // Stage 2: medium brown
+      [70, 55, 35],     // Stage 3: dark brown
+      [40, 30, 20]      // Stage 4: very dark brown (almost black)
     ];
     const c = colors[stage - 1];
     return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
@@ -392,40 +457,40 @@ function stopRainSound() {
     let size, petalCount, layerCount, sharpness, color;
     
     switch(stage) {
-      case 1:
-        size = 16;
-        petalCount = 5;
-        layerCount = 3;
+      case 1: // Soft detailed rose
+        size = 18;
+        petalCount = 8;
+        layerCount = 4;
         sharpness = 0;
         color = baseColor;
         break;
-      case 2:
-        size = 20;
-        petalCount = 6;
+      case 2: // Fuller detailed bloom
+        size = 22;
+        petalCount = 10;
+        layerCount = 5;
+        sharpness = 0.15;
+        color = brightenColor(baseColor, 8);
+        break;
+      case 3: // More complex flower
+        size = 28;
+        petalCount = 12;
         layerCount = 4;
-        sharpness = 0.2;
-        color = brightenColor(baseColor, 10);
+        sharpness = 0.5;
+        color = brightenColor(baseColor, 15);
         break;
-      case 3:
-        size = 26;
-        petalCount = 7;
+      case 4: // Large detailed spiky flower
+        size = 34;
+        petalCount = 14;
         layerCount = 3;
-        sharpness = 0.6;
-        color = brightenColor(baseColor, 25);
-        break;
-      case 4:
-        size = 32;
-        petalCount = 8;
-        layerCount = 2;
-        sharpness = 1;
-        const neonColors = {
-          a: '#ff1a75',
-          e: '#ffff00',
-          i: '#00d4ff',
-          o: '#ff6600',
-          u: '#b000ff'
+        sharpness = 0.85;
+        const brightColors = {
+          a: '#ffa6c9',  // brighter pink
+          e: '#fffaaa',  // brighter yellow
+          i: '#a6c9ff',  // brighter blue
+          o: '#ffc9a6',  // brighter peach
+          u: '#c9a6ff'   // brighter lavender
         };
-        color = neonColors[letter.toLowerCase()] || '#ff0099';
+        color = brightColors[letter.toLowerCase()] || brightenColor(baseColor, 25);
         break;
     }
 
@@ -476,14 +541,14 @@ function stopRainSound() {
       ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
     }
     
-    // Draw petal layers
+    // Draw petal layers - more detailed and natural
     for (let layer = f.layerCount - 1; layer >= 0; layer--) {
-      const layerSize = 1 - (layer * 0.15);
-      const layerRotation = (layer * Math.PI / f.petalCount) * 0.5;
+      const layerSize = 1 - (layer * 0.12);
+      const layerRotation = (layer * Math.PI / f.petalCount) * 0.6;
       
       ctx.save();
       ctx.rotate(layerRotation);
-      ctx.globalAlpha = 0.9 - layer * 0.1;
+      ctx.globalAlpha = 0.85 - layer * 0.08;
       
       const angleStep = (Math.PI * 2) / f.petalCount;
       for (let i = 0; i < f.petalCount; i++) {
@@ -493,41 +558,69 @@ function stopRainSound() {
         
         ctx.beginPath();
         
-        if (f.sharpness > 0.5) {
-          const tipDist = f.size * layerSize * 2.2;
-          const baseWidth = f.size * layerSize * (0.5 - f.sharpness * 0.2);
-          const controlDist = f.size * layerSize * 1.2;
+        if (f.sharpness > 0.4) {
+          // Detailed spiky/pointed petals
+          const tipDist = f.size * layerSize * 2.4;
+          const baseWidth = f.size * layerSize * (0.6 - f.sharpness * 0.25);
+          const controlDist = f.size * layerSize * 1.4;
           
-          ctx.moveTo(0, -f.size * layerSize * 0.3);
-          ctx.quadraticCurveTo(-baseWidth, -controlDist, 0, -tipDist);
-          ctx.quadraticCurveTo(baseWidth, -controlDist, 0, -f.size * layerSize * 0.3);
-          ctx.closePath();
-        } else {
-          const petalLength = f.size * layerSize * 1.6;
-          const petalWidth = f.size * layerSize * 1.1;
-          const centerY = -f.size * layerSize * 0.9;
-          
+          // Create more natural curves
           ctx.moveTo(0, -f.size * layerSize * 0.2);
           ctx.bezierCurveTo(
-            -petalWidth * 0.5, centerY - petalLength * 0.3,
-            -petalWidth * 0.3, centerY - petalLength * 0.8,
-            0, centerY - petalLength
+            -baseWidth * 0.7, -controlDist * 0.5,
+            -baseWidth * 0.4, -controlDist * 1.2,
+            0, -tipDist
           );
           ctx.bezierCurveTo(
-            petalWidth * 0.3, centerY - petalLength * 0.8,
-            petalWidth * 0.5, centerY - petalLength * 0.3,
+            baseWidth * 0.4, -controlDist * 1.2,
+            baseWidth * 0.7, -controlDist * 0.5,
             0, -f.size * layerSize * 0.2
+          );
+          ctx.closePath();
+        } else {
+          // Soft, detailed rose-like petals
+          const petalLength = f.size * layerSize * 1.8;
+          const petalWidth = f.size * layerSize * 1.2;
+          const centerY = -f.size * layerSize * 1.0;
+          
+          // Natural rose petal shape with ruffles
+          ctx.moveTo(0, -f.size * layerSize * 0.15);
+          ctx.bezierCurveTo(
+            -petalWidth * 0.6, centerY - petalLength * 0.2,
+            -petalWidth * 0.5, centerY - petalLength * 0.6,
+            -petalWidth * 0.2, centerY - petalLength * 0.85
+          );
+          ctx.bezierCurveTo(
+            -petalWidth * 0.1, centerY - petalLength * 0.95,
+            petalWidth * 0.1, centerY - petalLength * 0.95,
+            petalWidth * 0.2, centerY - petalLength * 0.85
+          );
+          ctx.bezierCurveTo(
+            petalWidth * 0.5, centerY - petalLength * 0.6,
+            petalWidth * 0.6, centerY - petalLength * 0.2,
+            0, -f.size * layerSize * 0.15
           );
           ctx.closePath();
         }
         
-        const gradient = ctx.createRadialGradient(0, -f.size * layerSize * 0.5, 0, 0, -f.size * layerSize, f.size * layerSize);
-        const darkAmount = layer * 8 + 5;
-        gradient.addColorStop(0, brightenColor(f.color, 15));
+        // More detailed gradient for depth
+        const gradient = ctx.createRadialGradient(0, -f.size * layerSize * 0.6, 0, 0, -f.size * layerSize * 1.2, f.size * layerSize * 1.5);
+        const lightAmount = 20 + layer * 5;
+        const darkAmount = layer * 10 + 8;
+        gradient.addColorStop(0, brightenColor(f.color, lightAmount));
+        gradient.addColorStop(0.5, f.color);
         gradient.addColorStop(1, brightenColor(f.color, -darkAmount));
         
         ctx.fillStyle = gradient;
         ctx.fill();
+        
+        // Add subtle petal edge highlight for realism
+        if (f.stage <= 2) {
+          ctx.strokeStyle = brightenColor(f.color, 10);
+          ctx.lineWidth = 0.5;
+          ctx.globalAlpha = 0.3;
+          ctx.stroke();
+        }
         
         ctx.restore();
       }
@@ -535,34 +628,53 @@ function stopRainSound() {
       ctx.restore();
     }
     
-    // Center
-    const centerSize = f.size * 0.5;
+    // Detailed center with multiple layers
+    const centerSize = f.size * 0.55;
+    
+    // Outer center ring
     ctx.beginPath();
     ctx.arc(0, 0, centerSize, 0, Math.PI * 2);
-    
     const centerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, centerSize);
-    if (f.stage === 4) {
-      centerGradient.addColorStop(0, '#ffffff');
-      centerGradient.addColorStop(1, brightenColor(f.color, 30));
-    } else {
-      centerGradient.addColorStop(0, '#fffacd');
-      centerGradient.addColorStop(1, '#d4a017');
-    }
+    centerGradient.addColorStop(0, brightenColor(f.color, 30));
+    centerGradient.addColorStop(0.6, f.color);
+    centerGradient.addColorStop(1, brightenColor(f.color, -15));
     ctx.fillStyle = centerGradient;
+    ctx.globalAlpha = 0.9;
     ctx.fill();
     
-    // Stamens for stages 1-2
-    if (f.stage <= 2) {
-      ctx.globalAlpha = 0.7;
-      for (let i = 0; i < 8; i++) {
-        const angle = (Math.PI * 2 * i) / 8;
-        const sx = Math.cos(angle) * centerSize * 0.6;
-        const sy = Math.sin(angle) * centerSize * 0.6;
-        ctx.beginPath();
-        ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = '#8B4513';
-        ctx.fill();
-      }
+    // Inner center
+    ctx.beginPath();
+    ctx.arc(0, 0, centerSize * 0.5, 0, Math.PI * 2);
+    const innerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, centerSize * 0.5);
+    innerGradient.addColorStop(0, '#fffef5');
+    innerGradient.addColorStop(1, brightenColor(f.color, 10));
+    ctx.fillStyle = innerGradient;
+    ctx.globalAlpha = 0.95;
+    ctx.fill();
+    
+    // Detailed stamens for all stages
+    ctx.globalAlpha = 0.8;
+    const stamenCount = f.stage <= 2 ? 12 : 16;
+    const stamenRadius = centerSize * (f.stage <= 2 ? 0.7 : 0.75);
+    
+    for (let i = 0; i < stamenCount; i++) {
+      const angle = (Math.PI * 2 * i) / stamenCount;
+      const sx = Math.cos(angle) * stamenRadius;
+      const sy = Math.sin(angle) * stamenRadius;
+      
+      // Stamen stem
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(sx, sy);
+      ctx.strokeStyle = brightenColor(f.color, -25);
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+      
+      // Stamen tip
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = brightenColor(f.color, -30);
+      ctx.fill();
     }
     
     ctx.restore();
@@ -626,7 +738,7 @@ function stopRainSound() {
   function startRain() {
     if (isRaining) return;
     isRaining = true;
-    document.getElementById('sun').classList.add('hidden');
+    document.getElementById('sun').classList.add('setting');
     startRainSound();
     
     // Create rain effect
@@ -652,7 +764,7 @@ function stopRainSound() {
   function stopRain() {
     if (!isRaining) return;
     isRaining = false;
-    document.getElementById('sun').classList.remove('hidden');
+    document.getElementById('sun').classList.remove('setting');
     stopRainSound();
     
     if (rainInterval) {
