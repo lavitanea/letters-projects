@@ -93,6 +93,7 @@
     font-size: 28px;
     letter-spacing: 1px;
     text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+    z-index: 100;
   }
   
   #typedDisplay {
@@ -108,11 +109,11 @@
     font-size: 18px;
     font-family: 'Courier New', monospace;
     max-width: 70%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: pre-wrap;
+    word-wrap: break-word;
     letter-spacing: 2px;
     min-width: 200px;
+    z-index: 100;
   }
   
   #controls {
@@ -121,6 +122,7 @@
     top: 24px;
     display: flex;
     gap: 12px;
+    z-index: 100;
   }
   
   button {
@@ -158,6 +160,7 @@
     transition: opacity 1s;
     pointer-events: none;
     box-shadow: 0 0 60px rgba(255, 230, 109, 0.6);
+    z-index: 10;
   }
   
   .sun.hidden {
@@ -197,6 +200,58 @@
   </div>
   <canvas id="visualCanvas"></canvas>
 </div>
+
+<!-- Rain sound (created with Web Audio API) -->
+<script>
+let audioContext = null;
+let rainGain = null;
+let rainOscillators = [];
+
+function initAudio() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    rainGain = audioContext.createGain();
+    rainGain.gain.value = 0;
+    rainGain.connect(audioContext.destination);
+  }
+}
+
+function startRainSound() {
+  initAudio();
+  
+  // Create multiple oscillators for rain-like white noise
+  for (let i = 0; i < 3; i++) {
+    const osc = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.value = 100 + Math.random() * 200;
+    gainNode.gain.value = 0.03;
+    
+    osc.connect(gainNode);
+    gainNode.connect(rainGain);
+    osc.start();
+    
+    rainOscillators.push({ osc, gain: gainNode });
+  }
+  
+  // Fade in
+  rainGain.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 1);
+}
+
+function stopRainSound() {
+  if (!rainGain || !audioContext) return;
+  
+  // Fade out
+  rainGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1);
+  
+  setTimeout(() => {
+    rainOscillators.forEach(({ osc }) => osc.stop());
+    rainOscillators = [];
+  }, 1100);
+}
+</script>
+
 <script>
 (() => {
   const canvas = document.getElementById('visualCanvas');
@@ -209,14 +264,14 @@
   });
 
   // STATE
-  const trees = []; // Multiple trees
+  const trees = [];
   const flowers = [];
   let typed = '';
   const keyTimes = [];
   const MIN_HISTORY = 15;
   let currentStage = 1;
   let isRaining = false;
-  const raindrops = [];
+  let rainInterval = null;
 
   // Pastel colors for each vowel
   const vowelColors = {
@@ -229,10 +284,6 @@
 
   function random(min, max) { 
     return Math.random() * (max - min) + min; 
-  }
-
-  function dist(ax, ay, bx, by) { 
-    return Math.hypot(bx - ax, by - ay); 
   }
 
   // Create a new tree
@@ -319,18 +370,22 @@
 
   function addFlower(branch, letter, stage) {
     const count = flowers.filter(f => f.char === letter).length;
-    const segmentIdx = Math.floor(branch.segments.length * (0.4 + (count % 4) * 0.15));
-    const segment = branch.segments[Math.min(segmentIdx, branch.segments.length - 1)];
     
-    // Calculate distance from tree center for spreading effect
-    const treeX = branch.tree ? branch.tree.x1 : W / 2;
-    const distanceFromCenter = Math.abs(segment.x - treeX);
-    const spreadFactor = Math.min(1, flowers.length / 20); // Gradually spread outward
+    // Place flower ON the branch (between segments)
+    const segmentIdx = Math.min(
+      Math.floor(branch.segments.length * (0.3 + (count % 5) * 0.14)),
+      branch.segments.length - 2
+    );
+    const segment = branch.segments[segmentIdx];
     
-    const offsetDist = 35 + distanceFromCenter * 0.3 + spreadFactor * 40;
-    const offsetAngle = random(0, Math.PI * 2);
-    const x = segment.x + Math.cos(offsetAngle) * offsetDist;
-    const y = segment.y + Math.sin(offsetAngle) * offsetDist;
+    // Small offset perpendicular to branch for natural look
+    const branchAngle = branch.angle || 0;
+    const offsetDist = 20 + (count % 3) * 8;
+    const perpAngle = branchAngle + Math.PI / 2;
+    const side = (count % 2 === 0) ? 1 : -1;
+    
+    const x = segment.x + Math.cos(perpAngle) * offsetDist * side;
+    const y = segment.y + Math.sin(perpAngle) * offsetDist * side;
 
     const baseColor = vowelColors[letter.toLowerCase()] || '#ffccdd';
     
@@ -413,7 +468,6 @@
     const scale = Math.min(1, age * 3);
     ctx.scale(scale, scale);
     
-    // Reduced glow for stage 4
     if (f.stage === 4) {
       ctx.shadowBlur = 15;
       ctx.shadowColor = f.color;
@@ -481,14 +535,13 @@
       ctx.restore();
     }
     
-    // Center - NO black circle for stage 4
+    // Center
     const centerSize = f.size * 0.5;
     ctx.beginPath();
     ctx.arc(0, 0, centerSize, 0, Math.PI * 2);
     
     const centerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, centerSize);
     if (f.stage === 4) {
-      // Bright center for neon flowers
       centerGradient.addColorStop(0, '#ffffff');
       centerGradient.addColorStop(1, brightenColor(f.color, 30));
     } else {
@@ -498,7 +551,7 @@
     ctx.fillStyle = centerGradient;
     ctx.fill();
     
-    // Stamens for realistic touch (stages 1-2)
+    // Stamens for stages 1-2
     if (f.stage <= 2) {
       ctx.globalAlpha = 0.7;
       for (let i = 0; i < 8; i++) {
@@ -574,9 +627,10 @@
     if (isRaining) return;
     isRaining = true;
     document.getElementById('sun').classList.add('hidden');
+    startRainSound();
     
     // Create rain effect
-    const rainInterval = setInterval(() => {
+    rainInterval = setInterval(() => {
       if (!isRaining) {
         clearInterval(rainInterval);
         return;
@@ -599,6 +653,16 @@
     if (!isRaining) return;
     isRaining = false;
     document.getElementById('sun').classList.remove('hidden');
+    stopRainSound();
+    
+    if (rainInterval) {
+      clearInterval(rainInterval);
+      rainInterval = null;
+    }
+  }
+
+  function updateTypedDisplay() {
+    document.getElementById('typedDisplay').innerText = typed || 'Type to grow your garden...';
   }
 
   // RENDER LOOP
@@ -623,12 +687,32 @@
     // Handle spacebar for new tree
     if (e.key === ' ') {
       e.preventDefault();
-      const spacing = W / (trees.length + 1);
-      const newX = spacing * (trees.length + 1);
+      
+      // Position new tree next to existing trees
+      let newX;
+      if (trees.length === 1) {
+        // Second tree: place to the right of center
+        newX = W / 2 + 200;
+      } else if (trees.length === 2) {
+        // Third tree: place to the left of center
+        newX = W / 2 - 200;
+      } else if (trees.length === 3) {
+        // Fourth tree: further right
+        newX = W / 2 + 400;
+      } else if (trees.length === 4) {
+        // Fifth tree: further left
+        newX = W / 2 - 400;
+      } else {
+        // Additional trees alternate sides
+        const side = (trees.length % 2 === 0) ? 1 : -1;
+        const distance = 200 * Math.ceil(trees.length / 2);
+        newX = W / 2 + (distance * side);
+      }
+      
       const newTree = createTree(newX);
       trees.push(newTree);
       typed += ' ';
-      document.getElementById('typedDisplay').innerText = typed;
+      updateTypedDisplay();
       return;
     }
     
@@ -641,19 +725,21 @@
       }
 
       const letter = e.key;
-      typed += letter;
-      document.getElementById('typedDisplay').innerText = typed;
-
       const isVowel = /[aeiou]/i.test(letter);
 
-      if (!isVowel) {
-        // CONSONANTS create flowers
+      typed += letter;
+      updateTypedDisplay();
+
+      if (isVowel) {
+        // VOWELS create flowers on branches
         const currentTree = trees[trees.length - 1];
         const allBranches = [currentTree, ...currentTree.branches];
-        const targetBranch = allBranches[flowers.length % allBranches.length];
-        addFlower(targetBranch, letter, currentStage);
+        if (allBranches.length > 0) {
+          const targetBranch = allBranches[Math.floor(Math.random() * allBranches.length)];
+          addFlower(targetBranch, letter, currentStage);
+        }
       } else {
-        // VOWELS grow branches
+        // CONSONANTS grow branches
         const currentTree = trees[trees.length - 1];
         const upperBranches = currentTree.branches.filter(b => b.segments && b.segments[b.segments.length - 1].y < H - 100);
         const parent = upperBranches.length > 0 
@@ -684,9 +770,9 @@
         keyTimes.length = 0;
         currentStage = 1;
         stopRain();
-        document.getElementById('typedDisplay').innerText = 'Type to grow your garden...';
         
         trees.push(createTree(W / 2));
+        updateTypedDisplay();
       }
     }, 30);
   });
